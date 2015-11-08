@@ -1,0 +1,9 @@
+name: mcex
+main: xyz.mcex.plugin.McexPlugin
+version: 0.1
+commands:
+   mcex:
+      description: Base command for all MCEX-related things. Do /mcex help for more information.
+      usage: /mcex
+      permission: mcex.cmd
+      permission-message: No permission.
