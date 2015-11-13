@@ -8,6 +8,9 @@ repositories {
     flatDir {
        dirs 'libs'
     }
+    maven {
+        url "http://nexus.theyeticave.net/content/repositories/pub_releases"
+    }
 }
 
 sourceSets {
@@ -31,6 +34,7 @@ dependencies {
     compile group: 'mysql', name: 'mysql-connector-java', version: '5.+'
     compile group: 'com.mchange', name: 'c3p0', version: '0.9.5.1'
     compile name: 'spigot-api-1.8.8'
+    compile group: 'net.milkbowl.vault', name: 'VaultAPI', version: '1.5'
 }
 
 buildDir = 'bin'
