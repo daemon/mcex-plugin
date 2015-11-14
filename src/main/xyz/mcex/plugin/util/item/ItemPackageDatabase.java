@@ -1,17 +1,21 @@
 package xyz.mcex.plugin.util.item;
 
+import org.bukkit.Material;
 import xyz.mcex.plugin.Database;
 import xyz.mcex.plugin.DatabaseManager;
 import xyz.mcex.plugin.equity.database.EquityDatabase;
 import xyz.mcex.plugin.equity.database.ItemNotFoundException;
+import xyz.mcex.plugin.util.PlayerUtils;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.UUID;
 
 public class ItemPackageDatabase extends Database
 {
@@ -23,7 +27,7 @@ public class ItemPackageDatabase extends Database
     this._equityDb = equityDatabase;
   }
 
-  public void queuePackage(ItemPackage itemPackage) throws SQLException, ItemNotFoundException
+  public void queuePackage(ItemPackage itemPackage) throws SQLException, ItemNotFoundException, IOException
   {
     Connection connection = null;
     PreparedStatement queueStmt = null;
@@ -33,21 +37,12 @@ public class ItemPackageDatabase extends Database
       connection.setAutoCommit(false);
       queueStmt = connection.prepareStatement("INSERT INTO item_package_queue (player_uuid, item_id, quantity) VALUES (?, ?, ?)");
 
-      int itemId = this._equityDb.getItemId(itemPackage._material.name(), connection);
-      // TODO refactor
-      ByteArrayOutputStream ba = new ByteArrayOutputStream(16);
-      DataOutputStream os = new DataOutputStream(ba);
-      try
-      {
-        os.writeLong(itemPackage._receiver.getMostSignificantBits());
-        os.writeLong(itemPackage._receiver.getLeastSignificantBits());
-      } catch (IOException e) {
-        return;
-      }
+      int itemId = this._equityDb.getItemId(itemPackage.material.name(), connection);
 
-      queueStmt.setBinaryStream(1, new ByteArrayInputStream(ba.toByteArray()), 16);
+      ByteArrayInputStream stream = PlayerUtils.uuidToStream(itemPackage.receiver);
+      queueStmt.setBinaryStream(1, stream, 16);
       queueStmt.setInt(2, itemId);
-      queueStmt.setInt(3, itemPackage._quantity);
+      queueStmt.setInt(3, itemPackage.quantity);
       queueStmt.execute();
       connection.commit();
     } catch (SQLException e) {
@@ -62,6 +57,60 @@ public class ItemPackageDatabase extends Database
       }
       if (queueStmt != null)
         queueStmt.close();
+    }
+  }
+
+  // TODO refactor connection setup and destroy
+  public List<ItemPackage> getPackages(UUID playerUuid) throws SQLException, IOException
+  {
+    List<ItemPackage> packages = new LinkedList<>();
+    Connection connection = null;
+    PreparedStatement getStmt = null;
+    ResultSet rs = null;
+
+    try
+    {
+      connection = this.manager().getConnection();
+      getStmt = connection.prepareStatement("SELECT items.name, quantity, item_package_queue.id FROM item_package_queue INNER JOIN items ON items.id=" +
+          "item_package_queue.item_id WHERE player_uuid = ?");
+      getStmt.setBinaryStream(1, PlayerUtils.uuidToStream(playerUuid));
+
+      rs = getStmt.executeQuery();
+      while (rs.next())
+      {
+        Material m;
+        if ((m = Material.getMaterial(rs.getString(1))) == null)
+          continue;
+        packages.add(new ItemPackage(playerUuid, m, rs.getInt(2), rs.getInt(3)));
+      }
+
+      return packages;
+    } finally {
+      if (getStmt != null)
+        getStmt.close();
+      if (rs != null)
+        rs.close();
+      if (connection != null)
+        connection.close();
+    }
+  }
+
+  public boolean deletePackage(ItemPackage itemPackage) throws SQLException
+  {
+    Connection connection = null;
+    PreparedStatement delStmt = null;
+
+    try
+    {
+      connection = this.manager().getConnection();
+      delStmt = connection.prepareStatement("DELETE FROM item_package_queue WHERE id = ?");
+      delStmt.setInt(1, itemPackage.id);
+      return delStmt.execute();
+    } finally {
+      if (delStmt != null)
+        delStmt.close();
+      if (connection != null)
+        connection.close();
     }
   }
 }
