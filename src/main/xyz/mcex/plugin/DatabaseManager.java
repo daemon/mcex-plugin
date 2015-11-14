@@ -43,8 +43,7 @@ public class DatabaseManager
     try
     {
       c = this._source.getConnection();
-      c.createStatement().execute("CREATE TABLE IF NOT EXISTS items (id UNSIGNED INT AUTO_INCREMENT PRIMARY KEY NOT NULL, item_id UNSIGNED INT NOT NULL, " +
-          "item_dv UNSIGNED TINYINT NOT NULL, CONSTRAINT UNIQUE CLUSTERED (item_id, item_dmg))");
+      c.createStatement().execute("CREATE TABLE IF NOT EXISTS items (id UNSIGNED INT AUTO_INCREMENT PRIMARY KEY NOT NULL, name VARCHAR(32) NOT NULL)");
       c.createStatement().execute("CREATE TABLE IF NOT EXISTS equity_buy_orders (id UNSIGNED INT AUTO_INCREMENT PRIMARY KEY NOT NULL, player_uuid BINARY(16) NOT NULL, " +
           "item_id UNSIGNED INT NOT NULL, quantity UNSIGNED INT NOT NULL, offer_value UNSIGNED INT NOT NULL, ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
           "CONSTRAINT FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE, INDEX offer_value_i(offer_value))");
@@ -54,6 +53,8 @@ public class DatabaseManager
       c.createStatement().execute("CREATE TABLE IF NOT EXISTS equity_sell_history (id UNSIGNED INT AUTO_INCREMENT PRIMARY KEY NOT NULL, player_uuid_seller BINARY(16) NOT NULL, " +
           "player_uuid_buyer BINARY(16) NOT NULL, item_id UNSIGNED INT NOT NULL, quantity UNSIGNED INT NOT NULL, offer_value UNSIGNED INT NOT NULL, ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
           "CONSTRAINT FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE)");
+      c.createStatement().execute("CREATE TABLE IF NOT EXISTS item_package_queue (id UNSIGNED INT AUTO_INCREMENT PRIMARY KEY NOT NULL, player_uuid BINARY(16) NOT NULL, " +
+          "item_id UNSIGNED INT NOT NULL, quantity UNSIGNED INT NOT NULL, CONSTRAINT FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE, INDEX player_uuid_i(player_uuid))");
     } finally {
       if (c != null)
         c.close();

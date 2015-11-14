@@ -1,4 +1,4 @@
-package xyz.mcex.plugin.equity;
+package xyz.mcex.plugin.equity.database;
 
 public class ItemNotFoundException extends Exception
 {

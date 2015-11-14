@@ -1,9 +1,10 @@
-package xyz.mcex.plugin.equity;
+package xyz.mcex.plugin.equity.database;
 
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import xyz.mcex.plugin.DatabaseManager;
 import xyz.mcex.plugin.Database;
+import xyz.mcex.plugin.internals.Nullable;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -59,20 +60,24 @@ public class EquityDatabase extends Database
     }
   }
 
-  public int getItemId(int id, byte dv) throws SQLException, ItemNotFoundException
+  public int getItemId(String name, @Nullable Connection connection) throws SQLException, ItemNotFoundException
   {
-    Material m = Material.getMaterial(id);
+    name = name.toUpperCase();
+    Material m = Material.getMaterial(name);
     if (m  == null)
       throw new ItemNotFoundException();
 
-    Connection conn = null;
+    boolean externalConnection = connection != null;
+    Connection conn = connection;
     PreparedStatement stmt = null;
     ResultSet rs = null;
 
     try
     {
-      conn = manager().getConnection();
-      stmt = conn.prepareStatement("SELECT id FROM items WHERE item_id = ? AND item_dv = ?");
+      if (!externalConnection)
+        conn = manager().getConnection();
+      stmt = conn.prepareStatement("SELECT id FROM items WHERE name = ? LOCK IN SHARE MODE");
+      stmt.setString(1, name.substring(0, Math.min(32, name.length())));
       rs = stmt.executeQuery();
       if (rs.next())
         return rs.getInt(1);
@@ -83,7 +88,7 @@ public class EquityDatabase extends Database
         rs.close();
       if (stmt != null)
         stmt.close();
-      if (conn != null)
+      if (conn != null && !externalConnection)
         conn.close();
     }
   }
@@ -96,7 +101,7 @@ public class EquityDatabase extends Database
     return buffer.getLong();
   }
 
-  private PutOrderResponse putOrder(UUID playerUuid, int id, byte dv, int quantity, int price, boolean isBuy) throws SQLException, ItemNotFoundException
+  private PutOrderResponse putOrder(UUID playerUuid, String itemName, int quantity, int price, boolean isBuy) throws SQLException, ItemNotFoundException
   {
     assert(quantity > 0);
     assert(price > 0);
@@ -111,7 +116,7 @@ public class EquityDatabase extends Database
     {
       conn = this.manager().getConnection();
       conn.setAutoCommit(false);
-      int rowId = this.getItemId(id, dv);
+      int rowId = this.getItemId(itemName, conn);
 
       getOrderStmt = this._createGetOrdersStmt(conn, isBuy);
       getOrderStmt.setInt(1, price);
@@ -133,7 +138,7 @@ public class EquityDatabase extends Database
         int orderId = getOrderRs.getInt(1);
         uuidBlob = getOrderRs.getBlob(2);
         UUID orderUuid = new UUID(this.fromBytes(uuidBlob.getBytes(1, 8)),
-          this.fromBytes(uuidBlob.getBytes(8, 8)));
+            this.fromBytes(uuidBlob.getBytes(8, 8)));
 
         orderItemId = getOrderRs.getInt(3);
         int orderQuantity = getOrderRs.getInt(4);
@@ -150,27 +155,29 @@ public class EquityDatabase extends Database
       getOrderRs.close();
       putOrderStmt = this._createInsertOrderStmt(conn, !isBuy);
 
-      Order lastOrder = orders.peek();
-      if (orderDelta != 0 && lastOrder.quantity != orderDelta)
-      {
-        putOrderStmt.setBlob(1, uuidBlob);
-        putOrderStmt.setInt(2, orderItemId);
-        putOrderStmt.setInt(3, lastOrder.quantity - orderDelta);
-        putOrderStmt.setInt(4, lastOrder.price);
-        putOrderStmt.execute();
-
-        orders.pop();
-        orders.push(new Order(lastOrder.rowId, lastOrder.playerUuid, lastOrder.quantity - orderDelta, lastOrder.price));
-      }
-
       if (!orders.empty())
+      {
+        Order lastOrder = orders.peek();
+        if (orderDelta != 0 && lastOrder.quantity != orderDelta)
+        {
+          putOrderStmt.setBlob(1, uuidBlob);
+          putOrderStmt.setInt(2, orderItemId);
+          putOrderStmt.setInt(3, lastOrder.quantity - orderDelta);
+          putOrderStmt.setInt(4, lastOrder.price);
+          putOrderStmt.execute();
+
+          orders.pop();
+          orders.push(new Order(lastOrder.rowId, lastOrder.playerUuid, lastOrder.quantity - orderDelta, lastOrder.price));
+        }
+
         deleteOrdersStmt = this._createDeleteOrdersStmt(conn, !isBuy);
+      }
 
       PutOrderResponse response = new PutOrderResponse(totalMoney, totalQuantity);
 
       while (!orders.empty())
       {
-        assert(deleteOrdersStmt != null);
+        assert (deleteOrdersStmt != null);
         Order order = orders.pop();
         deleteOrdersStmt.setInt(1, order.rowId);
         deleteOrdersStmt.execute();
@@ -200,7 +207,12 @@ public class EquityDatabase extends Database
       putOrderStmt.setInt(4, price);
 
       putOrderStmt.execute();
+      conn.commit();
       return response;
+    } catch (SQLException e) {
+      if (conn != null)
+        conn.rollback();
+      throw e;
     } finally {
       if (deleteOrdersStmt != null)
         deleteOrdersStmt.close();
@@ -218,14 +230,14 @@ public class EquityDatabase extends Database
     }
   }
 
-  public PutOrderResponse putBuyOrder(UUID playerUuid, int id, byte dv, int quantity, int price) throws SQLException, ItemNotFoundException
+  public PutOrderResponse putBuyOrder(UUID playerUuid, String itemName, int quantity, int price) throws SQLException, ItemNotFoundException
   {
-    return this.putOrder(playerUuid, id, dv, quantity, price, true);
+    return this.putOrder(playerUuid, itemName, quantity, price, true);
   }
 
-  public PutOrderResponse putSellOrder(UUID playerUuid, int id, byte dv, int quantity, int price) throws SQLException, ItemNotFoundException
+  public PutOrderResponse putSellOrder(UUID playerUuid, String itemName, int quantity, int price) throws SQLException, ItemNotFoundException
   {
-    return this.putOrder(playerUuid, id, dv, quantity, price, false);
+    return this.putOrder(playerUuid, itemName, quantity, price, false);
   }
 
   private PreparedStatement _createGetOrdersStmt(Connection connection, boolean isBuy) throws SQLException
