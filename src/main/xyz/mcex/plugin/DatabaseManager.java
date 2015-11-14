@@ -43,6 +43,7 @@ public class DatabaseManager
     try
     {
       c = this._source.getConnection();
+      // TODO reduce player UUID redundancy
       c.createStatement().execute("CREATE TABLE IF NOT EXISTS items (id UNSIGNED INT AUTO_INCREMENT PRIMARY KEY NOT NULL, name VARCHAR(32) NOT NULL)");
       c.createStatement().execute("CREATE TABLE IF NOT EXISTS equity_buy_orders (id UNSIGNED INT AUTO_INCREMENT PRIMARY KEY NOT NULL, player_uuid BINARY(16) NOT NULL, " +
           "item_id UNSIGNED INT NOT NULL, quantity UNSIGNED INT NOT NULL, offer_value UNSIGNED INT NOT NULL, ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +

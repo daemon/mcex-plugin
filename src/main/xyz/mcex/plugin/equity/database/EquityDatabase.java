@@ -210,7 +210,7 @@ public class EquityDatabase extends Database
       conn.commit();
       return response;
     } catch (SQLException e) {
-      if (conn != null)
+      if (conn != null && !conn.getAutoCommit())
         conn.rollback();
       throw e;
     } finally {
