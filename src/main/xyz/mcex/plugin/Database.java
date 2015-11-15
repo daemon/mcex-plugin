@@ -9,7 +9,7 @@ public abstract class Database
     this._manager = manager;
   }
 
-  protected DatabaseManager manager()
+  public DatabaseManager manager()
   {
     return this._manager;
   }

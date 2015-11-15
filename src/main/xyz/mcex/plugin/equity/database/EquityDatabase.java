@@ -101,7 +101,7 @@ public class EquityDatabase extends Database
     return buffer.getLong();
   }
 
-  private PutOrderResponse putOrder(UUID playerUuid, String itemName, int quantity, int price, boolean isBuy) throws SQLException, ItemNotFoundException
+  private PutOrderResponse putOrder(UUID playerUuid, String itemName, int quantity, double price, boolean isBuy) throws SQLException, ItemNotFoundException
   {
     assert(quantity > 0);
     assert(price > 0);
@@ -119,7 +119,7 @@ public class EquityDatabase extends Database
       int rowId = this.getItemId(itemName, conn);
 
       getOrderStmt = this._createGetOrdersStmt(conn, isBuy);
-      getOrderStmt.setInt(1, price);
+      getOrderStmt.setDouble(1, price);
       getOrderStmt.setInt(2, rowId);
       getOrderRs = getOrderStmt.executeQuery();
 
@@ -204,7 +204,7 @@ public class EquityDatabase extends Database
       putOrderStmt.setBinaryStream(1, new ByteArrayInputStream(ba.toByteArray()), 16);
       putOrderStmt.setInt(2, rowId);
       putOrderStmt.setInt(3, quantity);
-      putOrderStmt.setInt(4, price);
+      putOrderStmt.setDouble(4, price);
 
       putOrderStmt.execute();
       conn.commit();
@@ -230,12 +230,12 @@ public class EquityDatabase extends Database
     }
   }
 
-  public PutOrderResponse putBuyOrder(UUID playerUuid, String itemName, int quantity, int price) throws SQLException, ItemNotFoundException
+  public PutOrderResponse putBuyOrder(UUID playerUuid, String itemName, int quantity, double price) throws SQLException, ItemNotFoundException
   {
     return this.putOrder(playerUuid, itemName, quantity, price, true);
   }
 
-  public PutOrderResponse putSellOrder(UUID playerUuid, String itemName, int quantity, int price) throws SQLException, ItemNotFoundException
+  public PutOrderResponse putSellOrder(UUID playerUuid, String itemName, int quantity, double price) throws SQLException, ItemNotFoundException
   {
     return this.putOrder(playerUuid, itemName, quantity, price, false);
   }

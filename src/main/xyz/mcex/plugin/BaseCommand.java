@@ -15,11 +15,12 @@ public class BaseCommand implements CommandExecutor
     HelpPagesBuilder builder = new HelpPagesBuilder();
     builder.addHelp("/mcex buy", "Purchase some items.");
     builder.addHelp("/mcex sell", "Sell some items.");
-    builder.addHelp("/mcex account", "View your current outstanding and completed orders.");
     builder.addHelp("/mcex cancel", "Cancel an order. See /mcex account for orders");
-    builder.addHelp("/mcex list", "View listed orders.");
+    builder.addHelp("/mcex account", "View your current outstanding orders.");
+    builder.addHelp("/mcex list", "View listing prices.");
     builder.addHelp("/mcex mailbox", "View your item mailbox for bought items.");
     builder.addHelp("/mcex help <command>", "Shows detailed help for an MCEX subcommand.");
+    builder.addHelp("/mcex admin", "Admin commands");
     this._helpPages = builder.toPages();
   }
 

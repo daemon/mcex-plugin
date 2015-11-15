@@ -13,6 +13,11 @@ public class ItemPackage
   public final Material material;
   public final int id;
 
+  public ItemPackage(UUID receiver, Material material, int quantity)
+  {
+    this(receiver, material, quantity, -1);
+  }
+
   public ItemPackage(UUID receiver, Material material, int quantity, int id)
   {
     this.receiver = receiver;
