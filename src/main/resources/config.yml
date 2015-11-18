@@ -1,0 +1,5 @@
+sql-port: 3306
+sql-user: user
+sql-password: password
+sql-database: database
+sql-hostname: localhost

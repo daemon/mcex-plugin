@@ -8,11 +8,12 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import xyz.mcex.plugin.SubCommandExecutor;
 import xyz.mcex.plugin.equity.database.EquityDatabase;
 import xyz.mcex.plugin.equity.database.PutOrderAsyncTask;
 import xyz.mcex.plugin.message.MessageAlertColor;
 
-public class BuyCommand implements CommandExecutor
+public class BuyCommand implements SubCommandExecutor
 {
   private final Economy _economy;
   private final JavaPlugin _plugin;
@@ -34,18 +35,18 @@ public class BuyCommand implements CommandExecutor
       return true;
     }
 
-    if (strings.length < 3)
+    if (strings.length < 4)
       return false;
 
     Player p = (Player) commandSender;
 
-    String itemName = strings[0];
+    String itemName = strings[1];
     Integer quantity = null;
     Double offerVal = null;
     try
     {
-      quantity = Integer.parseInt(strings[1]);
-      offerVal = Double.parseDouble(strings[2]);
+      quantity = Integer.parseInt(strings[2]);
+      offerVal = Double.parseDouble(strings[3]);
     } catch (NumberFormatException e) {
       p.sendMessage(MessageAlertColor.ERROR + "Quantity and offer price must be an integer and decimal, respectively");
       return false;
@@ -86,5 +87,11 @@ public class BuyCommand implements CommandExecutor
 
     Bukkit.getScheduler().runTaskAsynchronously(this._plugin, task);
     return true;
+  }
+
+  @Override
+  public String getUsage()
+  {
+    return "/mcex buy <item name> <quantity> [offer value]";
   }
 }

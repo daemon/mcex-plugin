@@ -24,7 +24,8 @@ public class DatabaseManager
     String user = config.getString("sql-user");
     String password = config.getString("sql-password");
     String database = config.getString("sql-database");
-    this._source.setJdbcUrl("jdbc:mysql://localhost:" + port + "/" + database);
+    String hostname = config.getString("sql-hostname");
+    this._source.setJdbcUrl("jdbc:mysql://" + hostname + ":" + port + "/" + database);
     this._source.setUser(user);
     this._source.setPassword(password);
     this._source.setAutoCommitOnClose(true);
@@ -44,18 +45,18 @@ public class DatabaseManager
     {
       c = this._source.getConnection();
       // TODO reduce player UUID redundancy
-      c.createStatement().execute("CREATE TABLE IF NOT EXISTS items (id UNSIGNED INT AUTO_INCREMENT PRIMARY KEY NOT NULL, name VARCHAR(32) NOT NULL) ENGINE=InnoDB");
-      c.createStatement().execute("CREATE TABLE IF NOT EXISTS equity_buy_orders (id UNSIGNED INT AUTO_INCREMENT PRIMARY KEY NOT NULL, player_uuid BINARY(16) NOT NULL, " +
-          "item_id UNSIGNED INT NOT NULL, quantity UNSIGNED INT NOT NULL, offer_value REAL NOT NULL, ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
+      c.createStatement().execute("CREATE TABLE IF NOT EXISTS items (id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL, name VARCHAR(32) NOT NULL) ENGINE=InnoDB");
+      c.createStatement().execute("CREATE TABLE IF NOT EXISTS equity_buy_orders (id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL, player_uuid BINARY(16) NOT NULL, " +
+          "item_id INT UNSIGNED NOT NULL, quantity INT UNSIGNED NOT NULL, offer_value REAL NOT NULL, ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
           "CONSTRAINT FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE, INDEX offer_value_i(offer_value)) ENGINE=InnoDB");
-      c.createStatement().execute("CREATE TABLE IF NOT EXISTS equity_sell_orders (id UNSIGNED INT AUTO_INCREMENT PRIMARY KEY NOT NULL, player_uuid BINARY(16) NOT NULL, " +
-          "item_id UNSIGNED INT NOT NULL, quantity UNSIGNED INT NOT NULL, offer_value REAL NOT NULL, ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
+      c.createStatement().execute("CREATE TABLE IF NOT EXISTS equity_sell_orders (id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL, player_uuid BINARY(16) NOT NULL, " +
+          "item_id INT UNSIGNED NOT NULL, quantity INT UNSIGNED NOT NULL, offer_value REAL NOT NULL, ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
           "CONSTRAINT FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE, INDEX offer_value_i(offer_value)) ENGINE=InnoDB");
-      c.createStatement().execute("CREATE TABLE IF NOT EXISTS equity_sell_history (id UNSIGNED INT AUTO_INCREMENT PRIMARY KEY NOT NULL, player_uuid_seller BINARY(16) NOT NULL, " +
-          "player_uuid_buyer BINARY(16) NOT NULL, item_id UNSIGNED INT NOT NULL, quantity UNSIGNED INT NOT NULL, offer_value REAL NOT NULL, ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
+      c.createStatement().execute("CREATE TABLE IF NOT EXISTS equity_sell_history (id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL, player_uuid_seller BINARY(16) NOT NULL, " +
+          "player_uuid_buyer BINARY(16) NOT NULL, item_id INT UNSIGNED NOT NULL, quantity INT UNSIGNED NOT NULL, offer_value REAL NOT NULL, ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
           "CONSTRAINT FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE) ENGINE=InnoDB");
-      c.createStatement().execute("CREATE TABLE IF NOT EXISTS item_package_queue (id UNSIGNED INT AUTO_INCREMENT PRIMARY KEY NOT NULL, player_uuid BINARY(16) NOT NULL, " +
-          "item_id UNSIGNED INT NOT NULL, quantity UNSIGNED INT NOT NULL, CONSTRAINT FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE, INDEX player_uuid_i(player_uuid)) ENGINE=InnoDB");
+      c.createStatement().execute("CREATE TABLE IF NOT EXISTS item_package_queue (id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL, player_uuid BINARY(16) NOT NULL, " +
+          "item_id INT UNSIGNED NOT NULL, quantity INT UNSIGNED NOT NULL, CONSTRAINT FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE, INDEX player_uuid_i(player_uuid)) ENGINE=InnoDB");
     } finally {
       if (c != null)
         c.close();

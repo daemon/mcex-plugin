@@ -1,8 +1,14 @@
 package xyz.mcex.plugin;
 
+import net.milkbowl.vault.economy.Economy;
+import org.bukkit.Bukkit;
+import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
+import xyz.mcex.plugin.equity.BuyCommand;
+import xyz.mcex.plugin.equity.database.EquityDatabase;
 
 import java.beans.PropertyVetoException;
+import java.sql.Connection;
 import java.sql.SQLException;
 
 public class McexPlugin extends JavaPlugin
@@ -10,6 +16,7 @@ public class McexPlugin extends JavaPlugin
   @Override
   public void onEnable()
   {
+    this.saveDefaultConfig();
     this.getLogger().info("Enabling MCEX...");
     this.getLogger().info("Initializing tables...");
     DatabaseManager manager = null;
@@ -17,17 +24,32 @@ public class McexPlugin extends JavaPlugin
     {
       manager = new DatabaseManager(this.getConfig());
       manager.createDefaultTables();
+      Connection conn = manager.getConnection();
+      conn.close();
     } catch (PropertyVetoException e)
     {
       this.getLogger().warning("Failed to initialize database manager.");
+      e.printStackTrace();
       return;
     } catch (SQLException e)
     {
-      this.getLogger().warning("Creating tables failed!");
+      this.getLogger().warning("Connecting to database failed!");
+      e.printStackTrace();
       return;
     }
 
+    RegisteredServiceProvider<Economy> provider = Bukkit.getServicesManager().getRegistration(Economy.class);
+    if (provider == null)
+    {
+      this.getLogger().warning("Vault not installed!");
+      return;
+    }
 
+    EquityDatabase eqDb = new EquityDatabase(manager);
+
+    BaseCommand baseCmd = new BaseCommand();
+    baseCmd.registerCommand("buy", new BuyCommand(provider.getProvider(), this, eqDb));
+    this.getCommand("mcex").setExecutor(baseCmd);
   }
 
   @Override

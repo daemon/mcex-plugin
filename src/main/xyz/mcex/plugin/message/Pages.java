@@ -23,7 +23,7 @@ public class Pages
       return;
     }
 
-    output.sendMessage(ChatColor.DARK_GRAY + "---=" + ChatColor.GRAY + " Page " + (pageIndex + 1) + "/" + this.pages.size() + ChatColor.DARK_GRAY + " =--");
+    output.sendMessage(ChatColor.DARK_GRAY + "---=" + ChatColor.GRAY + " Page " + (pageIndex + 1) + "/" + this.pages.size() + ChatColor.DARK_GRAY + " =---");
     output.sendMessage(pages.get(pageIndex).trim());
   }
 
