@@ -31,7 +31,7 @@ public class AcceptItemCommand implements SubCommandExecutor
   @Override
   public String getPermissionName()
   {
-    return "mcex.cmd.accept";
+    return "mcex.cmd.itemmail.accept";
   }
 
   @Override
@@ -46,19 +46,25 @@ public class AcceptItemCommand implements SubCommandExecutor
     if (args.length < 2)
       return false;
 
-    Integer id;
+    Integer orderNo;
     try
     {
-      id = Integer.parseInt(args[1]);
+      orderNo = Integer.parseInt(args[1]);
     } catch (NumberFormatException e) {
       return false;
+    }
+
+    if (orderNo < 1)
+    {
+      commandSender.sendMessage(MessageAlertColor.ERROR + "Order number must be positive.");
+      return true;
     }
 
     Player p = (Player) commandSender;
 
     try
     {
-      ItemPackage pkg = this._ipDb.fetchPackage(p.getUniqueId(), id);
+      ItemPackage pkg = this._ipDb.fetchPackage(p.getUniqueId(), orderNo);
       (new AcceptItemPackageTask(this._ipDb, pkg)).run();
     } catch (NoSuchElementException e) {
       p.sendMessage(MessageAlertColor.ERROR + "Item package ID does not exist.");

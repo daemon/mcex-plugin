@@ -96,7 +96,7 @@ public class ItemPackageDatabase extends Database
     }
   }
 
-  public ItemPackage fetchPackage(UUID playerUuid, int id) throws SQLException, IOException, NoSuchElementException
+  public ItemPackage fetchPackage(UUID playerUuid, int packageNo) throws SQLException, IOException, NoSuchElementException
   {
     List<ItemPackage> packages = new LinkedList<>();
     Connection connection = null;
@@ -108,9 +108,9 @@ public class ItemPackageDatabase extends Database
       connection = this.manager().getConnection();
       connection.setAutoCommit(false);
       getStmt = connection.prepareStatement("SELECT items.name, quantity, item_package_queue.id FROM item_package_queue INNER JOIN items ON items.id=" +
-          "item_package_queue.item_id WHERE player_uuid = ? AND item_package_queue.id = ? FOR UPDATE");
+          "item_package_queue.item_id WHERE player_uuid = ? LIMIT ?, 1 FOR UPDATE");
       getStmt.setBinaryStream(1, PlayerUtils.uuidToStream(playerUuid), 16);
-      getStmt.setInt(2, id);
+      getStmt.setInt(2, packageNo - 1);
 
       rs = getStmt.executeQuery();
       if (rs.next())
