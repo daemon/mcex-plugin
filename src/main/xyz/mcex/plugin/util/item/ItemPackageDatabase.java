@@ -15,6 +15,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 
 public class ItemPackageDatabase extends Database
@@ -92,6 +93,54 @@ public class ItemPackageDatabase extends Database
         rs.close();
       if (connection != null)
         connection.close();
+    }
+  }
+
+  public ItemPackage fetchPackage(UUID playerUuid, int id) throws SQLException, IOException, NoSuchElementException
+  {
+    List<ItemPackage> packages = new LinkedList<>();
+    Connection connection = null;
+    PreparedStatement getStmt = null;
+    ResultSet rs = null;
+
+    try
+    {
+      connection = this.manager().getConnection();
+      connection.setAutoCommit(false);
+      getStmt = connection.prepareStatement("SELECT items.name, quantity, item_package_queue.id FROM item_package_queue INNER JOIN items ON items.id=" +
+          "item_package_queue.item_id WHERE player_uuid = ? AND item_package_queue.id = ? FOR UPDATE");
+      getStmt.setBinaryStream(1, PlayerUtils.uuidToStream(playerUuid), 16);
+      getStmt.setInt(2, id);
+
+      rs = getStmt.executeQuery();
+      if (rs.next())
+      {
+        Material m;
+        if ((m = Material.getMaterial(rs.getString(1))) == null)
+          throw new NoSuchElementException("No such material in items registered for trade");
+
+        ItemPackage pkg = new ItemPackage(playerUuid, m, rs.getInt(2), rs.getInt(3));
+
+        connection.createStatement().execute("DELETE FROM item_package_queue WHERE id = " + pkg.id);
+        connection.commit();
+        return pkg;
+      }
+
+      throw new NoSuchElementException("Item package not found");
+    } catch (SQLException e) {
+      if (connection != null && !connection.getAutoCommit())
+        connection.rollback();
+      throw e;
+    } finally {
+      if (getStmt != null)
+        getStmt.close();
+      if (rs != null)
+        rs.close();
+      if (connection != null)
+      {
+        connection.setAutoCommit(true);
+        connection.close();
+      }
     }
   }
 

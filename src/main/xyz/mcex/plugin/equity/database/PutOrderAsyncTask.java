@@ -8,6 +8,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitScheduler;
 import xyz.mcex.plugin.internals.Nullable;
 import xyz.mcex.plugin.message.MessageAlertColor;
+import xyz.mcex.plugin.message.Messages;
 import xyz.mcex.plugin.util.item.DeliverItemPackageAsyncTask;
 import xyz.mcex.plugin.util.item.ItemPackage;
 import xyz.mcex.plugin.util.item.ItemPackageDatabase;
@@ -114,7 +115,7 @@ public class PutOrderAsyncTask extends Observable implements Runnable
           }
           break;
         case FAILURE_SQL:
-          player.sendMessage(MessageAlertColor.ERROR + "SQL error: please report to staff.");
+          player.sendMessage(MessageAlertColor.ERROR + Messages.DATABASE_ERROR);
           break;
         case FAILURE_NOT_FOUND:
           player.sendMessage(MessageAlertColor.ERROR + "Item not registered for trade.");

@@ -30,19 +30,10 @@ public class AcceptItemPackageTask implements Runnable
     if (p == null)
       return;
 
-    try
-    {
-      this._db.deletePackage(this._pkg);
-    } catch (SQLException e)
-    {
-      p.sendMessage(MessageAlertColor.ERROR + "Error: couldn't accept item package. Please report to staff.");
-      return;
-    }
-
     Inventory inv = p.getInventory();
     HashMap<Integer, ItemStack> remainder = inv.addItem(this._pkg.toItemStacks());
     remainder.forEach((index, itemStack) -> {
-      p.getWorld().dropItemNaturally(p.getLocation(), itemStack);
+      p.getWorld().dropItem(p.getLocation(), itemStack);
     });
 
     p.sendMessage(MessageAlertColor.NOTIY_SUCCESS + "Items accepted.");

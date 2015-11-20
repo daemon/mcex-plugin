@@ -13,6 +13,7 @@ import xyz.mcex.plugin.equity.database.EquityDatabase;
 import xyz.mcex.plugin.equity.database.PutOrderAsyncTask;
 import xyz.mcex.plugin.equity.database.PutOrderResponse;
 import xyz.mcex.plugin.message.MessageAlertColor;
+import xyz.mcex.plugin.message.Messages;
 
 public class SellCommand implements SubCommandExecutor
 {
@@ -30,7 +31,7 @@ public class SellCommand implements SubCommandExecutor
   {
     if (!(commandSender instanceof Player))
     {
-      commandSender.sendMessage(MessageAlertColor.ERROR + "You need to be a player to run this command.");
+      commandSender.sendMessage(MessageAlertColor.ERROR + Messages.PLAYER_CMD_ERROR);
       return true;
     }
 
@@ -91,5 +92,11 @@ public class SellCommand implements SubCommandExecutor
   public String getUsage()
   {
     return "/mcex sell <item name> <quantity> [offer value]";
+  }
+
+  @Override
+  public String getPermissionName()
+  {
+    return "mcex.cmd.sell";
   }
 }

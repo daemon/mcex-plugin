@@ -7,6 +7,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import xyz.mcex.plugin.equity.BuyCommand;
 import xyz.mcex.plugin.equity.SellCommand;
 import xyz.mcex.plugin.equity.database.EquityDatabase;
+import xyz.mcex.plugin.util.item.AcceptItemCommand;
 
 import java.beans.PropertyVetoException;
 import java.sql.Connection;
@@ -51,6 +52,7 @@ public class McexPlugin extends JavaPlugin
     BaseCommand baseCmd = new BaseCommand();
     baseCmd.registerCommand("buy", new BuyCommand(provider.getProvider(), this, eqDb));
     baseCmd.registerCommand("sell", new SellCommand(this, eqDb));
+    baseCmd.registerCommand("accept", new AcceptItemCommand(manager));
     this.getCommand("mcex").setExecutor(baseCmd);
   }
 
