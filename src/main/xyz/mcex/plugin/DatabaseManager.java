@@ -28,6 +28,7 @@ public class DatabaseManager
     this._source.setJdbcUrl("jdbc:mysql://" + hostname + ":" + port + "/" + database);
     this._source.setUser(user);
     this._source.setPassword(password);
+    this._source.setMaxIdleTime(3600);
     this._source.setAutoCommitOnClose(true);
 
     this._source.setDriverClass("com.mysql.jdbc.Driver");

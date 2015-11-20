@@ -12,20 +12,25 @@ import java.util.function.BiConsumer;
 
 public class PutOrderResponse
 {
+  public enum ResponseCode { OK, FAILURE_NOT_FOUND, FAILURE_SQL };
   public final int totalMoney;
   public final int totalQuantity;
+  public final ResponseCode responseCode;
+
   public final Map<UUID, Integer> playerUuidToMoney = new HashMap<>();
 
-  PutOrderResponse()
+  PutOrderResponse(ResponseCode code)
   {
+    this.responseCode = code;
     this.totalMoney = 0;
     this.totalQuantity = 0;
   }
 
-  PutOrderResponse(int money, int totalQuantity)
+  PutOrderResponse(ResponseCode code, int money, int totalQuantity)
   {
     this.totalMoney = money;
     this.totalQuantity = totalQuantity;
+    this.responseCode = code;
   }
 
   void exerciseOrders(Economy economy)

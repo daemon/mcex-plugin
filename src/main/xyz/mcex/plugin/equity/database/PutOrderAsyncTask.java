@@ -19,8 +19,6 @@ import java.util.UUID;
 
 public class PutOrderAsyncTask extends Observable implements Runnable
 {
-  public enum Response { OK, FAILURE_NOT_FOUND, FAILURE_SQL };
-
   private final JavaPlugin _plugin;
   private final boolean _isBuy;
   private final UUID _playerUuid;
@@ -50,7 +48,6 @@ public class PutOrderAsyncTask extends Observable implements Runnable
     BukkitScheduler s = Bukkit.getScheduler();
     Runnable responseTask;
     PutOrderResponse response = null;
-    Response responseEnum = Response.OK;
 
     try
     {
@@ -58,18 +55,15 @@ public class PutOrderAsyncTask extends Observable implements Runnable
         response = this._database.putBuyOrder(this._playerUuid, this._material.name(), this._quantity, this._price);
       else
         response = this._database.putSellOrder(this._playerUuid, this._material.name(), this._quantity, this._price);
-    } catch (SQLException e)
-    {
-      responseEnum = Response.FAILURE_SQL;
-    } catch (ItemNotFoundException e)
-    {
-      responseEnum = Response.FAILURE_NOT_FOUND;
+    } catch (SQLException e) {
+      e.printStackTrace();
+      response = new PutOrderResponse(PutOrderResponse.ResponseCode.FAILURE_SQL);
     }
 
-    responseTask = new PutOrderResponseSyncTask(responseEnum, response);
+    responseTask = new PutOrderResponseSyncTask(response);
     s.runTask(this._plugin, responseTask);
-    final Response finalResponse = responseEnum;
 
+    final PutOrderResponse finalResponse = response;
     s.callSyncMethod(this._plugin, () -> {
       this.notifyObservers(finalResponse);
       return null;
@@ -78,34 +72,33 @@ public class PutOrderAsyncTask extends Observable implements Runnable
 
   private class PutOrderResponseSyncTask implements Runnable
   {
-    private final Response _response;
     private final PutOrderResponse _dbResponse;
     private final ItemPackageDatabase _itemDb;
 
-    public PutOrderResponseSyncTask(Response response, @Nullable PutOrderResponse dbResponse)
+    public PutOrderResponseSyncTask(@Nullable PutOrderResponse dbResponse)
     {
-      this._response = response;
       this._dbResponse = dbResponse;
       this._itemDb = new ItemPackageDatabase(_database.manager(), _database);
     }
+
 
     @Override
     public void run()
     {
       Player player = PutOrderAsyncTask.this._player;
-      int queuedQuantity  = _quantity - this._dbResponse.totalQuantity;
-      switch (this._response)
+      switch (this._dbResponse.responseCode)
       {
         case OK:
+          int queuedQuantity  = _quantity - this._dbResponse.totalQuantity;
           if (queuedQuantity != 0)
-            player.sendMessage(MessageAlertColor.NOTIY_SUCCESS + "Listed " + queuedQuantity  + " items at $" + queuedQuantity * _price);
+            player.sendMessage(MessageAlertColor.NOTIY_SUCCESS + "Listed " + queuedQuantity  + " items at $" + Math.round(queuedQuantity * _price * 100) / 100.0);
           if (_isBuy)
           {
             this._dbResponse.exerciseOrders(_economy);
             if (this._dbResponse.totalQuantity > 0)
             {
               player.sendMessage(MessageAlertColor.NOTIY_SUCCESS + "Bought " + this._dbResponse.totalQuantity + " items for $"
-                + this._dbResponse.totalMoney);
+                + Math.round(this._dbResponse.totalMoney * 100) / 100.0);
               ItemPackage pkg = new ItemPackage(_playerUuid, _material, this._dbResponse.totalQuantity);
               Bukkit.getScheduler().runTaskAsynchronously(_plugin, new DeliverItemPackageAsyncTask(this._itemDb, pkg));
               (new NotifyItemPackageTask(player)).run();
@@ -115,7 +108,7 @@ public class PutOrderAsyncTask extends Observable implements Runnable
             if (this._dbResponse.totalQuantity > 0)
             {
               player.sendMessage(MessageAlertColor.NOTIY_SUCCESS + "Sold " + this._dbResponse.totalQuantity + " items for $"
-                  + this._dbResponse.totalMoney);
+                  + Math.round(this._dbResponse.totalMoney * 100) / 100.0);
               _economy.depositPlayer(player, this._dbResponse.totalMoney);
             }
           }

@@ -5,6 +5,7 @@ import org.bukkit.inventory.ItemStack;
 import xyz.mcex.plugin.DatabaseManager;
 import xyz.mcex.plugin.Database;
 import xyz.mcex.plugin.internals.Nullable;
+import xyz.mcex.plugin.util.PlayerUtils;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -25,28 +26,19 @@ public class EquityDatabase extends Database
     if (m == null)
       throw new ItemNotFoundException();
 
-    ItemStack itemStack = new ItemStack(m, 1);
-    int id = itemStack.getTypeId();
-    byte dv = itemStack.getData().getData();
-
-   return this.addItem(id, dv);
+    return this.addItem(m);
   }
 
-  public boolean addItem(int id, byte dv) throws SQLException, ItemNotFoundException
+  public boolean addItem(Material m) throws SQLException, ItemNotFoundException
   {
     Connection conn = null;
     PreparedStatement stmt = null;
-
-    Material m = Material.getMaterial(id);
-    if (m == null)
-      throw new ItemNotFoundException();
 
     try
     {
       conn = manager().getConnection();
       stmt = this._createInsertItemStmt(conn);
-      stmt.setInt(1, id);
-      stmt.setByte(2, dv);
+      stmt.setString(1, m.name());
       boolean rc = stmt.execute();
 
       stmt.close();
@@ -101,7 +93,7 @@ public class EquityDatabase extends Database
     return buffer.getLong();
   }
 
-  private PutOrderResponse putOrder(UUID playerUuid, String itemName, int quantity, double price, boolean isBuy) throws SQLException, ItemNotFoundException
+  private PutOrderResponse putOrder(UUID playerUuid, String itemName, int quantity, double price, boolean isBuy) throws SQLException
   {
     assert(quantity > 0);
     assert(price > 0);
@@ -110,6 +102,8 @@ public class EquityDatabase extends Database
     PreparedStatement putOrderStmt = null;
     PreparedStatement getOrderStmt = null;
     PreparedStatement deleteOrdersStmt = null;
+    PreparedStatement getIsomorphicOrderStmt = null;
+    PreparedStatement updateOrderStmt = null;
     ResultSet getOrderRs = null;
 
     try
@@ -118,7 +112,36 @@ public class EquityDatabase extends Database
       conn.setAutoCommit(false);
       int rowId = this.getItemId(itemName, conn);
 
-      getOrderStmt = this._createGetOrdersStmt(conn, isBuy);
+      byte[] uuidBytes;
+      try
+      {
+        uuidBytes = PlayerUtils.uuidToBytes(playerUuid);
+      } catch (IOException e)
+      {
+        return new PutOrderResponse(PutOrderResponse.ResponseCode.FAILURE_NOT_FOUND);
+      }
+
+      // Attempt to merge with existing orders
+      getIsomorphicOrderStmt = this._createGetOrderStmt(conn, isBuy);
+      getIsomorphicOrderStmt.setDouble(1, price);
+      getIsomorphicOrderStmt.setBinaryStream(2, new ByteArrayInputStream(uuidBytes), 16);
+      getIsomorphicOrderStmt.setInt(3, rowId);
+
+      ResultSet isoRs = getIsomorphicOrderStmt.executeQuery();
+      if (isoRs.next())
+      {
+        updateOrderStmt = this._createUpdateItemStmt(conn, isBuy);
+        updateOrderStmt.setInt(1, quantity);
+        updateOrderStmt.setInt(2, isoRs.getInt(1));
+        isoRs.close();
+
+        updateOrderStmt.execute();
+        conn.commit();
+        return new PutOrderResponse(PutOrderResponse.ResponseCode.OK);
+      }
+
+      // List actual order
+      getOrderStmt = this._createGetOrdersStmt(conn, !isBuy);
       getOrderStmt.setDouble(1, price);
       getOrderStmt.setInt(2, rowId);
       getOrderRs = getOrderStmt.executeQuery();
@@ -127,18 +150,25 @@ public class EquityDatabase extends Database
       int totalMoney = 0;
       int totalQuantity = 0;
       int orderDelta = 0;
-      Blob uuidBlob = null;
+      InputStream uuidStream = null;
       int orderItemId = 0;
 
       while (getOrderRs.next())
       {
         if (quantity <= 0)
-          continue;
+          break;
 
         int orderId = getOrderRs.getInt(1);
-        uuidBlob = getOrderRs.getBlob(2);
-        UUID orderUuid = new UUID(this.fromBytes(uuidBlob.getBytes(1, 8)),
-            this.fromBytes(uuidBlob.getBytes(8, 8)));
+        uuidStream = getOrderRs.getBinaryStream(2);
+        UUID orderUuid = null;
+        try
+        {
+          orderUuid = PlayerUtils.streamToUuid(uuidStream);
+        } catch (IOException e)
+        {
+          e.printStackTrace();
+          return new PutOrderResponse(PutOrderResponse.ResponseCode.FAILURE_NOT_FOUND);
+        }
 
         orderItemId = getOrderRs.getInt(3);
         int orderQuantity = getOrderRs.getInt(4);
@@ -160,7 +190,7 @@ public class EquityDatabase extends Database
         Order lastOrder = orders.peek();
         if (orderDelta != 0 && lastOrder.quantity != orderDelta)
         {
-          putOrderStmt.setBlob(1, uuidBlob);
+          putOrderStmt.setBinaryStream(1, new ByteArrayInputStream(uuidBytes), 16);
           putOrderStmt.setInt(2, orderItemId);
           putOrderStmt.setInt(3, lastOrder.quantity - orderDelta);
           putOrderStmt.setInt(4, lastOrder.price);
@@ -173,7 +203,7 @@ public class EquityDatabase extends Database
         deleteOrdersStmt = this._createDeleteOrdersStmt(conn, !isBuy);
       }
 
-      PutOrderResponse response = new PutOrderResponse(totalMoney, totalQuantity);
+      PutOrderResponse response = new PutOrderResponse(PutOrderResponse.ResponseCode.OK, totalMoney, totalQuantity);
 
       while (!orders.empty())
       {
@@ -188,20 +218,9 @@ public class EquityDatabase extends Database
       if (quantity == 0)
         return response;
 
-      ByteArrayOutputStream ba = new ByteArrayOutputStream(16);
-      DataOutputStream os = new DataOutputStream(ba);
-      try
-      {
-        os.writeLong(playerUuid.getMostSignificantBits());
-        os.writeLong(playerUuid.getLeastSignificantBits());
-      } catch (IOException e)
-      {
-        return new PutOrderResponse();
-      }
-
       putOrderStmt.close();
       putOrderStmt = this._createInsertOrderStmt(conn, isBuy);
-      putOrderStmt.setBinaryStream(1, new ByteArrayInputStream(ba.toByteArray()), 16);
+      putOrderStmt.setBinaryStream(1, new ByteArrayInputStream(uuidBytes), 16);
       putOrderStmt.setInt(2, rowId);
       putOrderStmt.setInt(3, quantity);
       putOrderStmt.setDouble(4, price);
@@ -212,8 +231,13 @@ public class EquityDatabase extends Database
     } catch (SQLException e) {
       if (conn != null && !conn.getAutoCommit())
         conn.rollback();
-      throw e;
+      return new PutOrderResponse(PutOrderResponse.ResponseCode.FAILURE_SQL);
+    } catch (ItemNotFoundException e)
+    {
+      return new PutOrderResponse(PutOrderResponse.ResponseCode.FAILURE_NOT_FOUND);
     } finally {
+      if (updateOrderStmt != null)
+        updateOrderStmt.close();
       if (deleteOrdersStmt != null)
         deleteOrdersStmt.close();
       if (getOrderRs != null)
@@ -222,6 +246,8 @@ public class EquityDatabase extends Database
         getOrderStmt.close();
       if (putOrderStmt != null)
         putOrderStmt.close();
+      if (getIsomorphicOrderStmt != null)
+        getIsomorphicOrderStmt.close();
       if (conn != null)
       {
         conn.setAutoCommit(true);
@@ -230,12 +256,12 @@ public class EquityDatabase extends Database
     }
   }
 
-  public PutOrderResponse putBuyOrder(UUID playerUuid, String itemName, int quantity, double price) throws SQLException, ItemNotFoundException
+  public PutOrderResponse putBuyOrder(UUID playerUuid, String itemName, int quantity, double price) throws SQLException
   {
     return this.putOrder(playerUuid, itemName, quantity, price, true);
   }
 
-  public PutOrderResponse putSellOrder(UUID playerUuid, String itemName, int quantity, double price) throws SQLException, ItemNotFoundException
+  public PutOrderResponse putSellOrder(UUID playerUuid, String itemName, int quantity, double price) throws SQLException
   {
     return this.putOrder(playerUuid, itemName, quantity, price, false);
   }
@@ -258,7 +284,23 @@ public class EquityDatabase extends Database
 
   private PreparedStatement _createInsertItemStmt(Connection connection) throws SQLException
   {
-    return connection.prepareStatement("INSERT INTO items (item_id, item_dv) VALUES (?, ?)");
+    return connection.prepareStatement("INSERT INTO items (name) VALUES (?)");
+  }
+
+  private PreparedStatement _createUpdateItemStmt(Connection connection, boolean isBuy) throws SQLException
+  {
+    if (isBuy)
+      return connection.prepareStatement("UPDATE equity_buy_orders SET quantity = quantity + ? WHERE id = ?");
+    else
+      return connection.prepareStatement("UPDATE equity_sell_orders SET quantity = quantity + ? WHERE id = ?");
+  }
+
+  private PreparedStatement _createGetOrderStmt(Connection connection, boolean isBuy) throws SQLException
+  {
+    if (isBuy)
+      return connection.prepareStatement("SELECT id FROM equity_buy_orders WHERE offer_value = ? AND player_uuid = ? AND item_id = ?");
+    else
+      return connection.prepareStatement("SELECT id FROM equity_sell_orders WHERE offer_value = ? AND player_uuid = ? AND item_id = ?");
   }
 
   private PreparedStatement _createInsertOrderStmt(Connection connection, boolean isBuy) throws SQLException
