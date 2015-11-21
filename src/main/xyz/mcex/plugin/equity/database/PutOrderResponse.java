@@ -17,7 +17,7 @@ public class PutOrderResponse
   public final int totalQuantity;
   public final ResponseCode responseCode;
 
-  public final Map<UUID, Integer> playerUuidToMoney = new HashMap<>();
+  public final Map<UUID, Double> playerUuidToMoney = new HashMap<>();
 
   PutOrderResponse(ResponseCode code)
   {

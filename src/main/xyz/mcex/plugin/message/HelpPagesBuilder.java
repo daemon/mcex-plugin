@@ -19,6 +19,6 @@ public class HelpPagesBuilder
 
   public Pages toPages()
   {
-    return Pages.from(strBuilder.toString(), 6);
+    return StringPages.from(strBuilder.toString(), 6);
   }
 }

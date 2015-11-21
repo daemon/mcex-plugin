@@ -25,7 +25,7 @@ public class AcceptItemCommand implements SubCommandExecutor
   @Override
   public String getUsage()
   {
-    return "/mcex accept <item package number>. You can view package numbers using /mcex mailbox";
+    return "/mcex accept [item package number|all]. You can view package numbers using /mcex mailbox";
   }
 
   @Override

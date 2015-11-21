@@ -10,6 +10,7 @@ import xyz.mcex.plugin.equity.database.EquityDatabase;
 import xyz.mcex.plugin.message.MessageAlertColor;
 import xyz.mcex.plugin.message.Messages;
 import xyz.mcex.plugin.message.Pages;
+import xyz.mcex.plugin.message.StringPages;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -73,7 +74,7 @@ public class ListItemCommand implements SubCommandExecutor
     }
 
     // TODO page numbers
-    Pages.from(builder.toString(), 6).printTo(p, 0);
+    StringPages.from(builder.toString(), 6).printTo(p, 0);
     return true;
   }
 }

@@ -10,6 +10,8 @@ import xyz.mcex.plugin.util.PlayerUtils;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.sql.*;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Stack;
 import java.util.UUID;
 
@@ -172,7 +174,7 @@ public class EquityDatabase extends Database
 
         orderItemId = getOrderRs.getInt(3);
         int orderQuantity = getOrderRs.getInt(4);
-        int orderPrice = getOrderRs.getInt(5);
+        double orderPrice = getOrderRs.getDouble(5);
 
         orderDelta = Math.min(orderQuantity, quantity);
         quantity -= orderDelta;
@@ -193,7 +195,7 @@ public class EquityDatabase extends Database
           putOrderStmt.setBinaryStream(1, new ByteArrayInputStream(uuidBytes), 16);
           putOrderStmt.setInt(2, orderItemId);
           putOrderStmt.setInt(3, lastOrder.quantity - orderDelta);
-          putOrderStmt.setInt(4, lastOrder.price);
+          putOrderStmt.setDouble(4, lastOrder.price);
           putOrderStmt.execute();
 
           orders.pop();
@@ -256,6 +258,54 @@ public class EquityDatabase extends Database
     }
   }
 
+  public GetOrderResponse getOrders(String itemName, int startLimit, int nItems, boolean isBuy) throws SQLException
+  {
+    List<Order> orders = new LinkedList<>();
+    Connection conn = null;
+    PreparedStatement stmt = null;
+    ResultSet rs = null;
+
+    try
+    {
+      conn = this.manager().getConnection();
+      conn.setAutoCommit(false);
+
+      int id = this.getItemId(itemName, conn);
+
+      stmt = this._createGetOrdersByLimit(conn, isBuy);
+      stmt.setInt(1, id);
+      stmt.setInt(2, startLimit);
+      stmt.setInt(3, nItems);
+
+      rs = stmt.executeQuery();
+      while (rs.next())
+      {
+        InputStream uuidStream = rs.getBinaryStream(2);
+        try
+        {
+          orders.add(new Order(rs.getInt(1), PlayerUtils.streamToUuid(uuidStream), rs.getInt(4), rs.getDouble(5)));
+        } catch (IOException ignored) {}
+      }
+
+      return new GetOrderResponse(GetOrderResponse.ResponseCode.OK, orders);
+    } catch (SQLException e) {
+      return new GetOrderResponse(GetOrderResponse.ResponseCode.FAILURE_SQL);
+    } catch (ItemNotFoundException e)
+    {
+      return new GetOrderResponse(GetOrderResponse.ResponseCode.FAILURE_NOT_FOUND);
+    } finally {
+      if (rs != null)
+        rs.close();
+      if (stmt != null)
+        stmt.close();
+      if (conn != null)
+      {
+        conn.setAutoCommit(true);
+        conn.close();
+      }
+    }
+  }
+
   public PutOrderResponse putBuyOrder(UUID playerUuid, String itemName, int quantity, double price) throws SQLException
   {
     return this.putOrder(playerUuid, itemName, quantity, price, true);
@@ -272,6 +322,14 @@ public class EquityDatabase extends Database
       return connection.prepareStatement("SELECT * FROM equity_buy_orders WHERE offer_value >= ? AND item_id = ? ORDER BY offer_value DESC FOR UPDATE");
     else
       return connection.prepareStatement("SELECT * FROM equity_sell_orders WHERE offer_value <= ? AND item_id = ? ORDER BY offer_value ASC FOR UPDATE");
+  }
+
+  private PreparedStatement _createGetOrdersByLimit(Connection connection, boolean isBuy) throws SQLException
+  {
+    if (isBuy)
+      return connection.prepareStatement("SELECT * FROM equity_buy_orders WHERE item_id = ? ORDER BY offer_value DESC LIMIT ?,?");
+    else
+      return connection.prepareStatement("SELECT * FROM equity_sell_orders WHERE item_id = ? ORDER BY offer_value ASC LIMIT ?,?");
   }
 
   private PreparedStatement _createDeleteOrdersStmt(Connection connection, boolean isBuy) throws SQLException
