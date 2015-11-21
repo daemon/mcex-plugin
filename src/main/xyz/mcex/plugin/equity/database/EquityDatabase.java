@@ -155,6 +155,9 @@ public class EquityDatabase extends Database
       InputStream uuidStream = null;
       int orderItemId = 0;
 
+      OrderHistoryDatabase orderHistoryDb = new OrderHistoryDatabase(this.manager());
+      Stack<Integer> orderDeltas = new Stack<>();
+
       while (getOrderRs.next())
       {
         if (quantity <= 0)
@@ -169,7 +172,7 @@ public class EquityDatabase extends Database
         } catch (IOException e)
         {
           e.printStackTrace();
-          return new PutOrderResponse(PutOrderResponse.ResponseCode.FAILURE_NOT_FOUND);
+          return new PutOrderResponse(PutOrderResponse.ResponseCode.FAILURE_SQL);
         }
 
         orderItemId = getOrderRs.getInt(3);
@@ -179,7 +182,20 @@ public class EquityDatabase extends Database
         orderDelta = Math.min(orderQuantity, quantity);
         quantity -= orderDelta;
 
+        try
+        {
+          if (isBuy)
+            orderHistoryDb.logTrade(conn, orderUuid, playerUuid, orderDelta, orderPrice, rowId);
+          else
+            orderHistoryDb.logTrade(conn, playerUuid, orderUuid, orderDelta, orderPrice, rowId);
+
+        } catch (IOException e)
+        {
+          return new PutOrderResponse(PutOrderResponse.ResponseCode.FAILURE_SQL);
+        }
+
         orders.push(new Order(orderId, orderUuid, orderQuantity, orderPrice));
+        orderDeltas.add(orderDelta);
         totalMoney += orderPrice * orderDelta;
         totalQuantity += orderDelta;
       }
@@ -192,7 +208,13 @@ public class EquityDatabase extends Database
         Order lastOrder = orders.peek();
         if (orderDelta != 0 && lastOrder.quantity != orderDelta)
         {
-          putOrderStmt.setBinaryStream(1, new ByteArrayInputStream(uuidBytes), 16);
+          try
+          {
+            putOrderStmt.setBinaryStream(1, PlayerUtils.uuidToStream(lastOrder.playerUuid), 16);
+          } catch (IOException e)
+          {
+            return new PutOrderResponse(PutOrderResponse.ResponseCode.FAILURE_NOT_FOUND);
+          }
           putOrderStmt.setInt(2, orderItemId);
           putOrderStmt.setInt(3, lastOrder.quantity - orderDelta);
           putOrderStmt.setDouble(4, lastOrder.price);
@@ -214,7 +236,7 @@ public class EquityDatabase extends Database
         deleteOrdersStmt.setInt(1, order.rowId);
         deleteOrdersStmt.execute();
 
-        response.playerUuidToMoney.put(order.playerUuid, order.price * order.quantity);
+        response.playerUuidToMoney.put(order.playerUuid, order.price * orderDeltas.pop());
       }
 
       if (quantity == 0)
@@ -234,8 +256,7 @@ public class EquityDatabase extends Database
       if (conn != null && !conn.getAutoCommit())
         conn.rollback();
       return new PutOrderResponse(PutOrderResponse.ResponseCode.FAILURE_SQL);
-    } catch (ItemNotFoundException e)
-    {
+    } catch (ItemNotFoundException e) {
       return new PutOrderResponse(PutOrderResponse.ResponseCode.FAILURE_NOT_FOUND);
     } finally {
       if (updateOrderStmt != null)

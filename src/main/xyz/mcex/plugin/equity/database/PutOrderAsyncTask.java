@@ -65,9 +65,9 @@ public class PutOrderAsyncTask extends Observable implements Runnable
     s.runTask(this._plugin, responseTask);
 
     final PutOrderResponse finalResponse = response;
-    s.callSyncMethod(this._plugin, () -> {
+    s.runTask(this._plugin, () -> {
+      this.setChanged();
       this.notifyObservers(finalResponse);
-      return null;
     });
   }
 
@@ -81,7 +81,6 @@ public class PutOrderAsyncTask extends Observable implements Runnable
       this._dbResponse = dbResponse;
       this._itemDb = new ItemPackageDatabase(_database.manager(), _database);
     }
-
 
     @Override
     public void run()

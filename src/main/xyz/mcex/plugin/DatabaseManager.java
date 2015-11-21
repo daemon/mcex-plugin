@@ -46,7 +46,8 @@ public class DatabaseManager
     {
       c = this._source.getConnection();
       // TODO reduce player UUID redundancy
-      c.createStatement().execute("CREATE TABLE IF NOT EXISTS items (id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL, name VARCHAR(32) NOT NULL) ENGINE=InnoDB");
+      c.createStatement().execute("CREATE TABLE IF NOT EXISTS items (id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL, name VARCHAR(32) NOT NULL, " +
+          "nbt_hash_b64 CHAR(28) NOT NULL, CONSTRAINT UNIQUE CLUSTERED (name, nbt_hash_b64)) ENGINE=InnoDB");
       c.createStatement().execute("CREATE TABLE IF NOT EXISTS equity_buy_orders (id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL, player_uuid BINARY(16) NOT NULL, " +
           "item_id INT UNSIGNED NOT NULL, quantity INT UNSIGNED NOT NULL, offer_value REAL NOT NULL, ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
           "CONSTRAINT FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE, INDEX offer_value_i(offer_value)) ENGINE=InnoDB");
@@ -57,7 +58,7 @@ public class DatabaseManager
           "player_uuid_buyer BINARY(16) NOT NULL, item_id INT UNSIGNED NOT NULL, quantity INT UNSIGNED NOT NULL, offer_value REAL NOT NULL, ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
           "CONSTRAINT FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE) ENGINE=InnoDB");
       c.createStatement().execute("CREATE TABLE IF NOT EXISTS item_package_queue (id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL, player_uuid BINARY(16) NOT NULL, " +
-          "item_id INT UNSIGNED NOT NULL, quantity INT UNSIGNED NOT NULL, CONSTRAINT FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE, INDEX player_uuid_i(player_uuid)) ENGINE=InnoDB");
+          "item_id INT UNSIGNED NOT NULL, quantity INT UNSIGNED NOT NULL, UNIQUE (item_id), CONSTRAINT FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE, INDEX player_uuid_i(player_uuid)) ENGINE=InnoDB");
     } finally {
       if (c != null)
         c.close();

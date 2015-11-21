@@ -36,7 +36,8 @@ public class ItemPackageDatabase extends Database
     {
       connection = this.manager().getConnection();
       connection.setAutoCommit(false);
-      queueStmt = connection.prepareStatement("INSERT INTO item_package_queue (player_uuid, item_id, quantity) VALUES (?, ?, ?)");
+      queueStmt = connection.prepareStatement("INSERT INTO item_package_queue (player_uuid, item_id, quantity) VALUES (?, ?, ?) " +
+          "ON DUPLICATE KEY UPDATE quantity=quantity + ?");
 
       int itemId = this._equityDb.getItemId(itemPackage.material.name(), connection);
 
@@ -44,6 +45,7 @@ public class ItemPackageDatabase extends Database
       queueStmt.setBinaryStream(1, stream, 16);
       queueStmt.setInt(2, itemId);
       queueStmt.setInt(3, itemPackage.quantity);
+      queueStmt.setInt(4, itemPackage.quantity);
       queueStmt.execute();
       connection.commit();
     } catch (SQLException e) {

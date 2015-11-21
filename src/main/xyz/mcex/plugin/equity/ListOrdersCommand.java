@@ -82,13 +82,14 @@ public class ListOrdersCommand implements SubCommandExecutor
       else if (pageStr.equals(""))
         msg = MessageAlertColor.NOTIFY_AGNOSTIC + "You've reached the end of this database.";
       else
-        msg += "\n" + MessageAlertColor.INFO + "/mcex list buy " + itemName.toLowerCase() + " " + (finalPageNo + 1) + " for the next page.";
+        msg += "\n" + MessageAlertColor.INFO + "/mcex list " + type.toLowerCase() + " " + itemName.toLowerCase() + " " + (finalPageNo + 1) + " for the next page.";
 
       final String finalMsg = msg;
       Bukkit.getScheduler().runTask(this._plugin, () -> {
         commandSender.sendMessage(finalMsg);
       });
     });
+
     return true;
   }
 }

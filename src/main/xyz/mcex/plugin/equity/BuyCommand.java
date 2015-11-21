@@ -80,15 +80,14 @@ public class BuyCommand implements SubCommandExecutor
 
     final Integer finalQuantity = quantity;
     task.addObserver((o, arg) -> {
-      // TODO: move code from PutOrderAsyncTask.ResponseTask to here
-      // TODO: notify online sellers that buyer purchased their stuff
       PutOrderResponse response = (PutOrderResponse) arg;
+
       if (response.responseCode != PutOrderResponse.ResponseCode.OK)
         this._economy.depositPlayer(p, finalOfferVal);
       else
       {
         double rate = finalOfferVal / finalQuantity;
-        System.out.println(response.totalQuantity + " " + rate + " " + response.totalMoney);
+        Bukkit.getLogger().info(response.totalQuantity + " " + rate + " " + response.totalMoney);
         double refund = response.totalQuantity * rate - response.totalMoney;
         if (refund > 0.000001)
           this._economy.depositPlayer(p, refund);

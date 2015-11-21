@@ -30,7 +30,7 @@ public class ItemPackage
   {
     int mss = this.material.getMaxStackSize();
     int quantity = this.quantity;
-    ItemStack[] stacks = new ItemStack[quantity / mss + quantity % mss];
+    ItemStack[] stacks = new ItemStack[(int) Math.ceil(quantity / (double) mss)];
 
     for (int i = 0; i < stacks.length; ++i)
     {

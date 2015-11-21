@@ -26,12 +26,15 @@ public class DeliverItemPackageAsyncTask extends Observable implements Runnable
       this.notifyObservers(Response.OK);
     } catch (SQLException e)
     {
+      e.printStackTrace();
       this.notifyObservers(Response.SQL_EXCEPTION);
     } catch (ItemNotFoundException e)
     {
+      e.printStackTrace();
       this.notifyObservers(Response.ITEM_NOT_FOUND);
     } catch (IOException e)
     {
+      e.printStackTrace();
       this.notifyObservers(Response.UUID_EXCEPTION);
     }
   }
