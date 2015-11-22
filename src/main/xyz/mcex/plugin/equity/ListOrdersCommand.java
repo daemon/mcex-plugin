@@ -42,9 +42,15 @@ public class ListOrdersCommand implements SubCommandExecutor
     String type = args[1];
     boolean isBuy = true;
     if (type.equalsIgnoreCase("buy"))
+    {
       isBuy = true;
+      type = "Buy";
+    }
     else if (type.equalsIgnoreCase("sell"))
+    {
       isBuy = false;
+      type = "Sell";
+    }
     else
     {
       commandSender.sendMessage(MessageAlertColor.ERROR + "The second argument must be either \"buy\" or \"sell\"");
@@ -72,17 +78,18 @@ public class ListOrdersCommand implements SubCommandExecutor
     commandSender.sendMessage(MessageAlertColor.NOTIFY_AGNOSTIC + "Processing...");
     final Integer finalPageNo = pageNo;
     final boolean finalIsBuy = isBuy;
+    final String finalType = type;
     Bukkit.getScheduler().runTaskAsynchronously(this._plugin, () -> {
       OrderListPages pages = new OrderListPages(this._manager, itemName, finalIsBuy);
       String pageStr = pages.getPage(finalPageNo - 1);
-      String msg = MessageAlertColor.INFO + "Orders for " + itemName.toLowerCase() + "\n" + pageStr;
+      String msg = MessageAlertColor.INFO + finalType + " orders for " + itemName.toLowerCase() + "\n" + pageStr;
 
       if (pageStr == null)
         msg = MessageAlertColor.ERROR + Messages.DATABASE_ERROR;
       else if (pageStr.equals(""))
         msg = MessageAlertColor.NOTIFY_AGNOSTIC + "You've reached the end of this database.";
       else
-        msg += "\n" + MessageAlertColor.INFO + "/mcex list " + type.toLowerCase() + " " + itemName.toLowerCase() + " " + (finalPageNo + 1) + " for the next page.";
+        msg += "\n" + MessageAlertColor.INFO + "/mcex list " + finalType.toLowerCase() + " " + itemName.toLowerCase() + " " + (finalPageNo + 1) + " for the next page.";
 
       final String finalMsg = msg;
       Bukkit.getScheduler().runTask(this._plugin, () -> {

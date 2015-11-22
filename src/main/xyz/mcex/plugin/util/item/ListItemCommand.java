@@ -69,7 +69,7 @@ public class ListItemCommand implements SubCommandExecutor
     for (ItemPackage pkg : packages)
     {
       builder.append(ChatColor.YELLOW).append(i).append(") ");
-      builder.append(ChatColor.WHITE).append(pkg.quantity).append(" x ").append(pkg.material.name()).append("\n");
+      builder.append(ChatColor.WHITE).append(pkg.quantity).append(" x ").append(pkg.item.alias).append("\n");
       ++i;
     }
 

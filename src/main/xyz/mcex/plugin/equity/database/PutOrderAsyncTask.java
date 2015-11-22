@@ -23,19 +23,19 @@ public class PutOrderAsyncTask extends Observable implements Runnable
   private final JavaPlugin _plugin;
   private final boolean _isBuy;
   private final UUID _playerUuid;
-  private final Material _material;
+  private final String _alias;
   private final int _quantity;
   private final double _price;
   private final EquityDatabase _database;
   private final Player _player;
   private final Economy _economy;
 
-  public PutOrderAsyncTask(JavaPlugin plugin, EquityDatabase database, Player player, Material material, int quantity, double price, boolean isBuy)
+  public PutOrderAsyncTask(JavaPlugin plugin, EquityDatabase database, Player player, String name, int quantity, double price, boolean isBuy)
   {
     this._plugin = plugin;
     this._player = player;
     this._playerUuid = player.getUniqueId();
-    this._material = material;
+    this._alias = name;
     this._quantity = quantity;
     this._price = price;
     this._isBuy = isBuy;
@@ -53,9 +53,9 @@ public class PutOrderAsyncTask extends Observable implements Runnable
     try
     {
       if (this._isBuy)
-        response = this._database.putBuyOrder(this._playerUuid, this._material.name(), this._quantity, this._price);
+        response = this._database.putBuyOrder(this._playerUuid, this._alias, this._quantity, this._price);
       else
-        response = this._database.putSellOrder(this._playerUuid, this._material.name(), this._quantity, this._price);
+        response = this._database.putSellOrder(this._playerUuid, this._alias, this._quantity, this._price);
     } catch (SQLException e) {
       e.printStackTrace();
       response = new PutOrderResponse(PutOrderResponse.ResponseCode.FAILURE_SQL);
@@ -99,7 +99,7 @@ public class PutOrderAsyncTask extends Observable implements Runnable
             {
               player.sendMessage(MessageAlertColor.NOTIY_SUCCESS + "Bought " + this._dbResponse.totalQuantity + " items for $"
                 + Math.round(this._dbResponse.totalMoney * 100) / 100.0);
-              ItemPackage pkg = new ItemPackage(_playerUuid, _material, this._dbResponse.totalQuantity);
+              ItemPackage pkg = new ItemPackage(_playerUuid, this._dbResponse.item, this._dbResponse.totalQuantity);
               Bukkit.getScheduler().runTaskAsynchronously(_plugin, new DeliverItemPackageAsyncTask(this._itemDb, pkg));
               (new NotifyItemPackageTask(player)).run();
             }

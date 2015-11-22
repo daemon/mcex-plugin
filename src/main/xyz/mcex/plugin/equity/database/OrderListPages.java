@@ -30,6 +30,7 @@ public class OrderListPages extends BufferedDatabasePages
       response = this._eqDb.getOrders(this._itemName, index * 6, 6, this._viewBuy);
     } catch (SQLException e)
     {
+      e.printStackTrace();
       return null;
     }
 

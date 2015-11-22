@@ -59,13 +59,6 @@ public class BuyCommand implements SubCommandExecutor
       return false;
     }
 
-    Material mat = Material.getMaterial(itemName.toUpperCase());
-    if (mat == null)
-    {
-      p.sendMessage(MessageAlertColor.ERROR + "Item doesn't exist!");
-      return false;
-    }
-
     double money = this._economy.getBalance(p);
     if (money < offerVal)
     {
@@ -75,7 +68,7 @@ public class BuyCommand implements SubCommandExecutor
 
     this._economy.withdrawPlayer(p, offerVal);
     p.sendMessage(MessageAlertColor.NOTIFY_AGNOSTIC + "Processing order...");
-    PutOrderAsyncTask task = new PutOrderAsyncTask(this._plugin, this._eqDb, p, mat, quantity, offerVal / quantity, true);
+    PutOrderAsyncTask task = new PutOrderAsyncTask(this._plugin, this._eqDb, p, itemName, quantity, offerVal / quantity, true);
     final Double finalOfferVal = offerVal;
 
     final Integer finalQuantity = quantity;

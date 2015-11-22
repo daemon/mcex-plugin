@@ -16,6 +16,7 @@ public class PutOrderResponse
   public final int totalMoney;
   public final int totalQuantity;
   public final ResponseCode responseCode;
+  public final RegisteredItem item;
 
   public final Map<UUID, Double> playerUuidToMoney = new HashMap<>();
 
@@ -24,11 +25,13 @@ public class PutOrderResponse
     this.responseCode = code;
     this.totalMoney = 0;
     this.totalQuantity = 0;
+    this.item = null;
   }
 
-  PutOrderResponse(ResponseCode code, int money, int totalQuantity)
+  PutOrderResponse(ResponseCode code, int money, int totalQuantity, RegisteredItem item)
   {
     this.totalMoney = money;
+    this.item = item;
     this.totalQuantity = totalQuantity;
     this.responseCode = code;
   }

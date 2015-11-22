@@ -1,10 +1,7 @@
 package xyz.mcex.plugin.equity.database;
 
-import org.bukkit.Material;
-import org.bukkit.inventory.ItemStack;
 import xyz.mcex.plugin.DatabaseManager;
 import xyz.mcex.plugin.Database;
-import xyz.mcex.plugin.internals.Nullable;
 import xyz.mcex.plugin.util.PlayerUtils;
 
 import java.io.*;
@@ -20,71 +17,6 @@ public class EquityDatabase extends Database
   public EquityDatabase(DatabaseManager manager)
   {
     super(manager);
-  }
-
-  public boolean addItem(String name) throws SQLException, ItemNotFoundException
-  {
-    Material m = Material.getMaterial(name.toUpperCase());
-    if (m == null)
-      throw new ItemNotFoundException();
-
-    return this.addItem(m);
-  }
-
-  public boolean addItem(Material m) throws SQLException, ItemNotFoundException
-  {
-    Connection conn = null;
-    PreparedStatement stmt = null;
-
-    try
-    {
-      conn = manager().getConnection();
-      stmt = this._createInsertItemStmt(conn);
-      stmt.setString(1, m.name());
-      boolean rc = stmt.execute();
-
-      stmt.close();
-      conn.close();
-      return rc;
-    } finally {
-      if (stmt != null)
-        stmt.close();
-      if (conn != null)
-        conn.close();
-    }
-  }
-
-  public int getItemId(String name, @Nullable Connection connection) throws SQLException, ItemNotFoundException
-  {
-    name = name.toUpperCase();
-    Material m = Material.getMaterial(name);
-    if (m  == null)
-      throw new ItemNotFoundException();
-
-    boolean externalConnection = connection != null;
-    Connection conn = connection;
-    PreparedStatement stmt = null;
-    ResultSet rs = null;
-
-    try
-    {
-      if (!externalConnection)
-        conn = manager().getConnection();
-      stmt = conn.prepareStatement("SELECT id FROM items WHERE name = ? LOCK IN SHARE MODE");
-      stmt.setString(1, name.substring(0, Math.min(32, name.length())));
-      rs = stmt.executeQuery();
-      if (rs.next())
-        return rs.getInt(1);
-
-      throw new ItemNotFoundException();
-    } finally {
-      if (rs != null)
-        rs.close();
-      if (stmt != null)
-        stmt.close();
-      if (conn != null && !externalConnection)
-        conn.close();
-    }
   }
 
   private Long fromBytes(byte[] bytes)
@@ -112,7 +44,10 @@ public class EquityDatabase extends Database
     {
       conn = this.manager().getConnection();
       conn.setAutoCommit(false);
-      int rowId = this.getItemId(itemName, conn);
+
+      ItemDatabase itemDb = new ItemDatabase(this.manager());
+      RegisteredItem registeredItem = itemDb.getItem(itemName, conn);
+      int rowId = registeredItem.id;
 
       byte[] uuidBytes;
       try
@@ -227,7 +162,7 @@ public class EquityDatabase extends Database
         deleteOrdersStmt = this._createDeleteOrdersStmt(conn, !isBuy);
       }
 
-      PutOrderResponse response = new PutOrderResponse(PutOrderResponse.ResponseCode.OK, totalMoney, totalQuantity);
+      PutOrderResponse response = new PutOrderResponse(PutOrderResponse.ResponseCode.OK, totalMoney, totalQuantity, registeredItem);
 
       while (!orders.empty())
       {
@@ -291,7 +226,8 @@ public class EquityDatabase extends Database
       conn = this.manager().getConnection();
       conn.setAutoCommit(false);
 
-      int id = this.getItemId(itemName, conn);
+      ItemDatabase db = new ItemDatabase(this.manager());
+      int id = db.getItem(itemName, conn).id;
 
       stmt = this._createGetOrdersByLimit(conn, isBuy);
       stmt.setInt(1, id);
@@ -310,9 +246,11 @@ public class EquityDatabase extends Database
 
       return new GetOrderResponse(GetOrderResponse.ResponseCode.OK, orders);
     } catch (SQLException e) {
+      e.printStackTrace();
       return new GetOrderResponse(GetOrderResponse.ResponseCode.FAILURE_SQL);
     } catch (ItemNotFoundException e)
     {
+      e.printStackTrace();
       return new GetOrderResponse(GetOrderResponse.ResponseCode.FAILURE_NOT_FOUND);
     } finally {
       if (rs != null)
@@ -359,11 +297,6 @@ public class EquityDatabase extends Database
       return connection.prepareStatement("DELETE FROM equity_buy_orders WHERE id = ?");
     else
       return connection.prepareStatement("DELETE FROM equity_sell_orders WHERE id = ?");
-  }
-
-  private PreparedStatement _createInsertItemStmt(Connection connection) throws SQLException
-  {
-    return connection.prepareStatement("INSERT INTO items (name) VALUES (?)");
   }
 
   private PreparedStatement _createUpdateItemStmt(Connection connection, boolean isBuy) throws SQLException

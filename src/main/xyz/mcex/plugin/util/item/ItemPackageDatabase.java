@@ -4,7 +4,9 @@ import org.bukkit.Material;
 import xyz.mcex.plugin.Database;
 import xyz.mcex.plugin.DatabaseManager;
 import xyz.mcex.plugin.equity.database.EquityDatabase;
+import xyz.mcex.plugin.equity.database.ItemDatabase;
 import xyz.mcex.plugin.equity.database.ItemNotFoundException;
+import xyz.mcex.plugin.equity.database.RegisteredItem;
 import xyz.mcex.plugin.util.PlayerUtils;
 
 import java.io.ByteArrayInputStream;
@@ -31,35 +33,21 @@ public class ItemPackageDatabase extends Database
   public void queuePackage(ItemPackage itemPackage) throws SQLException, ItemNotFoundException, IOException
   {
     Connection connection = null;
-    PreparedStatement queueStmt = null;
     try
     {
       connection = this.manager().getConnection();
-      connection.setAutoCommit(false);
-      queueStmt = connection.prepareStatement("INSERT INTO item_package_queue (player_uuid, item_id, quantity) VALUES (?, ?, ?) " +
+      PreparedStatement queueStmt = connection.prepareStatement("INSERT INTO item_package_queue (player_uuid, item_id, quantity) VALUES (?, ?, ?) " +
           "ON DUPLICATE KEY UPDATE quantity=quantity + ?");
-
-      int itemId = this._equityDb.getItemId(itemPackage.material.name(), connection);
 
       ByteArrayInputStream stream = PlayerUtils.uuidToStream(itemPackage.receiver);
       queueStmt.setBinaryStream(1, stream, 16);
-      queueStmt.setInt(2, itemId);
+      queueStmt.setInt(2, itemPackage.item.id);
       queueStmt.setInt(3, itemPackage.quantity);
       queueStmt.setInt(4, itemPackage.quantity);
       queueStmt.execute();
-      connection.commit();
-    } catch (SQLException e) {
-      if (connection != null && !connection.getAutoCommit())
-        connection.rollback();
-      throw e;
     } finally {
       if (connection != null)
-      {
-        connection.setAutoCommit(true);
         connection.close();
-      }
-      if (queueStmt != null)
-        queueStmt.close();
     }
   }
 
@@ -74,23 +62,29 @@ public class ItemPackageDatabase extends Database
     try
     {
       connection = this.manager().getConnection();
-      getStmt = connection.prepareStatement("SELECT items.name, quantity, item_package_queue.id FROM item_package_queue INNER JOIN items ON items.id=" +
-          "item_package_queue.item_id WHERE player_uuid = ?");
+      ItemDatabase itemDb = new ItemDatabase(this.manager());
+
+      getStmt = connection.prepareStatement("SELECT item_id, quantity, id FROM item_package_queue WHERE player_uuid = ?");
       getStmt.setBinaryStream(1, PlayerUtils.uuidToStream(playerUuid));
 
       rs = getStmt.executeQuery();
       while (rs.next())
       {
-        Material m;
-        if ((m = Material.getMaterial(rs.getString(1))) == null)
+        RegisteredItem item;
+        try
+        {
+          item = itemDb.getItem(rs.getInt(1), connection);
+        } catch (ItemNotFoundException e)
+        {
+          e.printStackTrace();
           continue;
-        packages.add(new ItemPackage(playerUuid, m, rs.getInt(2), rs.getInt(3)));
+        }
+
+        packages.add(new ItemPackage(playerUuid, item, rs.getInt(2), rs.getInt(3)));
       }
 
       return packages;
     } finally {
-      if (getStmt != null)
-        getStmt.close();
       if (rs != null)
         rs.close();
       if (connection != null)
@@ -98,7 +92,7 @@ public class ItemPackageDatabase extends Database
     }
   }
 
-  public ItemPackage fetchPackage(UUID playerUuid, int packageNo) throws SQLException, IOException, NoSuchElementException
+  public ItemPackage fetchPackage(UUID playerUuid, int packageNo) throws SQLException, IOException, ItemNotFoundException
   {
     List<ItemPackage> packages = new LinkedList<>();
     Connection connection = null;
@@ -109,26 +103,24 @@ public class ItemPackageDatabase extends Database
     {
       connection = this.manager().getConnection();
       connection.setAutoCommit(false);
-      getStmt = connection.prepareStatement("SELECT items.name, quantity, item_package_queue.id FROM item_package_queue INNER JOIN items ON items.id=" +
-          "item_package_queue.item_id WHERE player_uuid = ? LIMIT ?, 1 FOR UPDATE");
+      getStmt = connection.prepareStatement("SELECT item_id, quantity, id FROM item_package_queue WHERE player_uuid = ? LIMIT ?, 1 FOR UPDATE");
       getStmt.setBinaryStream(1, PlayerUtils.uuidToStream(playerUuid), 16);
       getStmt.setInt(2, packageNo - 1);
 
       rs = getStmt.executeQuery();
       if (rs.next())
       {
-        Material m;
-        if ((m = Material.getMaterial(rs.getString(1))) == null)
-          throw new NoSuchElementException("No such material in items registered for trade");
+        ItemDatabase itemDb = new ItemDatabase(this.manager());
+        RegisteredItem item = itemDb.getItem(rs.getInt(1), connection);
 
-        ItemPackage pkg = new ItemPackage(playerUuid, m, rs.getInt(2), rs.getInt(3));
+        ItemPackage pkg = new ItemPackage(playerUuid, item, rs.getInt(2), rs.getInt(3));
 
         connection.createStatement().execute("DELETE FROM item_package_queue WHERE id = " + pkg.id);
         connection.commit();
         return pkg;
       }
 
-      throw new NoSuchElementException("Item package not found");
+      throw new ItemNotFoundException();
     } catch (SQLException e) {
       if (connection != null && !connection.getAutoCommit())
         connection.rollback();

@@ -6,6 +6,7 @@ import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 import xyz.mcex.plugin.equity.BuyCommand;
 import xyz.mcex.plugin.equity.ListOrdersCommand;
+import xyz.mcex.plugin.equity.RegisterItemCommand;
 import xyz.mcex.plugin.equity.SellCommand;
 import xyz.mcex.plugin.equity.database.EquityDatabase;
 import xyz.mcex.plugin.util.item.AcceptItemCommand;
@@ -57,6 +58,8 @@ public class McexPlugin extends JavaPlugin
     baseCmd.registerCommand("accept", new AcceptItemCommand(manager));
     baseCmd.registerCommand("mailbox", new ListItemCommand(manager));
     baseCmd.registerCommand("list", new ListOrdersCommand(this, manager));
+    baseCmd.registerCommand("admin", new AdminCommand());
+    baseCmd.registerCommand("additem", new RegisterItemCommand(manager));
     this.getCommand("mcex").setExecutor(baseCmd);
   }
 
