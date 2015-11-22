@@ -19,6 +19,7 @@ public class PutOrderResponse
   public final RegisteredItem item;
 
   public final Map<UUID, Double> playerUuidToMoney = new HashMap<>();
+  public final Map<UUID, Integer> playerUuidToQuantity = new HashMap<>();
 
   PutOrderResponse(ResponseCode code)
   {

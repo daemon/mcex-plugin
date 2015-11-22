@@ -110,6 +110,15 @@ public class PutOrderAsyncTask extends Observable implements Runnable
               player.sendMessage(MessageAlertColor.NOTIY_SUCCESS + "Sold " + this._dbResponse.totalQuantity + " items for $"
                   + Math.round(this._dbResponse.totalMoney * 100) / 100.0);
               _economy.depositPlayer(player, this._dbResponse.totalMoney);
+
+              this._dbResponse.playerUuidToQuantity.forEach((uuid, quantity) -> {
+                ItemPackage pkg = new ItemPackage(uuid, this._dbResponse.item, quantity);
+                Bukkit.getScheduler().runTaskAsynchronously(_plugin, new DeliverItemPackageAsyncTask(this._itemDb, pkg));
+
+                Player recipient = Bukkit.getPlayer(uuid);
+                if (recipient != null)
+                  (new NotifyItemPackageTask(recipient)).run();
+              });
             }
           }
           break;

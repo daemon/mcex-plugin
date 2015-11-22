@@ -171,7 +171,9 @@ public class EquityDatabase extends Database
         deleteOrdersStmt.setInt(1, order.rowId);
         deleteOrdersStmt.execute();
 
-        response.playerUuidToMoney.put(order.playerUuid, order.price * orderDeltas.pop());
+        Integer orderDel = orderDeltas.pop();
+        response.playerUuidToMoney.put(order.playerUuid, order.price * orderDel);
+        response.playerUuidToQuantity.put(order.playerUuid, orderDel);
       }
 
       if (quantity == 0)
