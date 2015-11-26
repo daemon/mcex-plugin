@@ -1,5 +1,6 @@
 package xyz.mcex.plugin;
 
+import io.vertx.core.Vertx;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.RegisteredServiceProvider;
@@ -8,6 +9,7 @@ import xyz.mcex.plugin.equity.BuyCommand;
 import xyz.mcex.plugin.equity.ListOrdersCommand;
 import xyz.mcex.plugin.equity.RegisterItemCommand;
 import xyz.mcex.plugin.equity.SellCommand;
+import xyz.mcex.plugin.equity.chart.ChartVerticle;
 import xyz.mcex.plugin.equity.database.EquityDatabase;
 import xyz.mcex.plugin.util.item.AcceptItemCommand;
 import xyz.mcex.plugin.util.item.ListItemCommand;
@@ -61,6 +63,8 @@ public class McexPlugin extends JavaPlugin
     baseCmd.registerCommand("admin", new AdminCommand());
     baseCmd.registerCommand("additem", new RegisterItemCommand(manager));
     this.getCommand("mcex").setExecutor(baseCmd);
+
+    Vertx.vertx().deployVerticle(new ChartVerticle(getConfig(), manager));
   }
 
   @Override

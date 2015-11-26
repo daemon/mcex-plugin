@@ -6,6 +6,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import xyz.mcex.plugin.DatabaseManager;
 import xyz.mcex.plugin.SubCommandExecutor;
+import xyz.mcex.plugin.equity.database.DuplicateItemException;
 import xyz.mcex.plugin.equity.database.ItemDatabase;
 import xyz.mcex.plugin.equity.database.ItemNotFoundException;
 import xyz.mcex.plugin.message.MessageAlertColor;
@@ -47,7 +48,7 @@ public class RegisterItemCommand implements SubCommandExecutor
     {
       commandSender.sendMessage(MessageAlertColor.ERROR + Messages.PLAYER_CMD_ERROR);
       return false;
-    } else if (isPlayer) {
+    } else if (isPlayer && args[1].equalsIgnoreCase("hand")) {
       Player p = (Player) commandSender;
       ItemStack handItem = p.getItemInHand();
       if (handItem == null)
@@ -71,7 +72,10 @@ public class RegisterItemCommand implements SubCommandExecutor
         commandSender.sendMessage(MessageAlertColor.NOTIY_SUCCESS + alias.toUpperCase() + " added successfully.");
       } catch (SQLException e) {
         e.printStackTrace();
-        commandSender.sendMessage(MessageAlertColor.ERROR + "Item either exists or database connection failed.");
+        commandSender.sendMessage(MessageAlertColor.ERROR + Messages.DATABASE_ERROR);
+      } catch (DuplicateItemException e)
+      {
+        commandSender.sendMessage(MessageAlertColor.ERROR + "That item or alias is already registered.");
       }
 
       return true;
@@ -84,10 +88,13 @@ public class RegisterItemCommand implements SubCommandExecutor
     } catch (SQLException e)
     {
       e.printStackTrace();
-      commandSender.sendMessage(MessageAlertColor.ERROR + "Item either exists or database connection failed.");
+      commandSender.sendMessage(MessageAlertColor.ERROR + Messages.DATABASE_ERROR);
     } catch (ItemNotFoundException e)
     {
       commandSender.sendMessage(MessageAlertColor.ERROR + "No item matches that name.");
+    } catch (DuplicateItemException e)
+    {
+      commandSender.sendMessage(MessageAlertColor.ERROR + "That item or alias is already registered.");
     }
 
     return true;

@@ -3,3 +3,8 @@ sql-user: user
 sql-password: password
 sql-database: database
 sql-hostname: localhost
+chart-port: 2015
+chart-enabled: true
+chart-url: 45.79.150.151
+sell-listing-limit: 25
+buy-listing-limit: 25

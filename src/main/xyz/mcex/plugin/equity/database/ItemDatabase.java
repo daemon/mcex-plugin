@@ -21,7 +21,7 @@ public class ItemDatabase extends Database
     super(manager);
   }
 
-  public void addItem(String name) throws SQLException, ItemNotFoundException
+  public void addItem(String name) throws SQLException, ItemNotFoundException, DuplicateItemException
   {
     Material m = Material.getMaterial(name.toUpperCase());
     if (m == null)
@@ -30,7 +30,7 @@ public class ItemDatabase extends Database
     this.addItem(new ItemStack(m, 1), null);
   }
 
-  public void addItem(ItemStack itemStack, @Nullable String alias) throws SQLException
+  public void addItem(ItemStack itemStack, @Nullable String alias) throws SQLException, DuplicateItemException
   {
     Connection conn = null;
     PreparedStatement stmt = null;
@@ -47,21 +47,39 @@ public class ItemDatabase extends Database
     try
     {
       conn = manager().getConnection();
-      stmt = this._createInsertItemStmt(conn);
-      stmt.setString(1, alias);
-      stmt.setString(2, hash.base64Digest());
-      stmt.setInt(3, itemStack.getDurability());
-      if (itemStack.hasItemMeta() && itemStack.getItemMeta().hasDisplayName())
-        stmt.setString(4, itemStack.getItemMeta().getDisplayName());
-      else
-        stmt.setString(4, null);
-      stmt.setString(5, itemStack.getData().getItemType().name());
-      stmt.execute();
+      conn.setAutoCommit(false);
+
+      try
+      {
+        this.getItem(alias, conn);
+      } catch (ItemNotFoundException e)
+      {
+        stmt = this._createInsertItemStmt(conn);
+        stmt.setString(1, alias);
+        stmt.setString(2, hash.base64Digest());
+        stmt.setInt(3, itemStack.getDurability());
+        if (itemStack.hasItemMeta() && itemStack.getItemMeta().hasDisplayName())
+          stmt.setString(4, itemStack.getItemMeta().getDisplayName());
+        else
+          stmt.setString(4, null);
+        stmt.setString(5, itemStack.getData().getItemType().name());
+        stmt.execute();
+        conn.commit();
+        return;
+      }
+
+      throw new DuplicateItemException();
+    } catch (SQLException e) {
+      if (conn != null)
+        conn.rollback();
     } finally {
       if (stmt != null)
         stmt.close();
       if (conn != null)
+      {
+        conn.setAutoCommit(true);
         conn.close();
+      }
     }
   }
 
