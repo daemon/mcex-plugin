@@ -27,7 +27,7 @@ public class ChartHandler implements Handler<RoutingContext>
       context.response().setChunked(true);
       String line;
       while ((line = reader.readLine()) != null)
-        context.response().write(line.replace("{item}", item).replace("{host}", this._host) + "\n");
+        context.response().write(line.replace("{item}", item.toUpperCase()).replace("{host}", this._host) + "\n");
       context.response().end();
     } catch (Exception e)
     {

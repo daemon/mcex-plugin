@@ -9,10 +9,7 @@ import xyz.mcex.plugin.equity.database.ItemNotFoundException;
 import xyz.mcex.plugin.equity.database.OrderHistoryDatabase;
 
 import java.sql.SQLException;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.StringJoiner;
+import java.util.*;
 
 public class JsonDataHandler implements Handler<RoutingContext>
 {
@@ -29,23 +26,18 @@ public class JsonDataHandler implements Handler<RoutingContext>
   {
     int itemId = this._db.getItem(item, null).id;
     List<OrderHistoryDatabase.Trade> trades = this._orderDb.getTrades(itemId);
+    Collections.reverse(trades);
 
     StringJoiner rootJoiner = new StringJoiner(",", "[", "]");
 
-    Iterator<OrderHistoryDatabase.Trade> it = trades.iterator();
-    while (it.hasNext())
+    for (OrderHistoryDatabase.Trade trade : trades)
     {
       StringJoiner joiner = new StringJoiner(",", "[", "]");
-      OrderHistoryDatabase.Trade t1 = it.next();
-      if (!it.hasNext())
-        break;
+      String volume = String.valueOf(trade.quantity);
+      String price = String.valueOf((trade.value) / 2);
+      String timestamp = String.valueOf(trade.timeStamp);
 
-      OrderHistoryDatabase.Trade t2 = it.next();
-      String volume = String.valueOf(t1.quantity + t2.quantity);
-      String price = String.valueOf((t1.value + t2.value) / 2);
-      String timestamp = String.valueOf(t2.timeStamp + (t1.timeStamp - t2.timeStamp) / 2);
-
-      joiner.add(timestamp).add(price).add(price).add(price).add(price).add(volume);
+      joiner.add(timestamp).add(price).add(volume);
       rootJoiner.add(joiner.toString());
     }
 
@@ -61,7 +53,6 @@ public class JsonDataHandler implements Handler<RoutingContext>
       context.response().putHeader("Content-Type", "text/javascript").end(this.getJson(item));
     } catch (Exception e)
     {
-      e.printStackTrace();
       context.response().close();
     }
   }

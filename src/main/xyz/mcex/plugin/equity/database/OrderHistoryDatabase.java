@@ -37,8 +37,9 @@ public class OrderHistoryDatabase extends Database
     Connection conn = this.manager().getConnection();
     try
     {
-      PreparedStatement stmt = conn.prepareStatement("SELECT quantity, offer_value, ts FROM equity_sell_history ORDER BY ts DESC LIMIT 500");
+      PreparedStatement stmt = conn.prepareStatement("SELECT quantity, offer_value, ts FROM equity_sell_history WHERE item_id = ? ORDER BY ts DESC LIMIT 500");
       List<Trade> trades = new LinkedList<>();
+      stmt.setInt(1, itemRowId);
       ResultSet rs = stmt.executeQuery();
       while (rs.next())
       {

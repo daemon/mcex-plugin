@@ -1,10 +1,7 @@
 <!DOCTYPE html>
-<html style="height:100%; width:100%; margin:0;">
+<html style="height:100%; width:100%; margin:0; padding:0;">
 <head>
 <script type='text/javascript' src='//code.jquery.com/jquery-1.9.1.js'></script>
-<!--<script src="http://code.highcharts.com/highcharts.js"></script>-->
-<!--<script src="http://code.highcharts.com/highcharts-more.js"></script>-->
-<!--<script src="http://code.highcharts.com/modules/exporting.js"></script>-->
 <script type='text/javascript'>
 $(function () {
     $.getJSON('http://{host}/charts/{item}/json', function(data) {
@@ -27,14 +24,11 @@ $(function () {
             ohlc.push([
                 data[i][0], // the date
                 data[i][1], // open
-                data[i][2], // high
-                data[i][3], // low
-                data[i][4] // close
             ]);
 
             volume.push([
                 data[i][0], // the date
-                data[i][5] // the volume
+                data[i][2] // the volume
             ]);
         }
 
@@ -43,35 +37,16 @@ $(function () {
         $('#container').highcharts('StockChart', {
 
             rangeSelector: {
-                buttons: [{
-                    type: 'day',
-                    count: 1,
-                    text: '1d'
-                }, {
-                    type: 'week',
-                    count: 1,
-                    text: '1w'
-                }, {
-                    type: 'month',
-                    count: 1,
-                    text: '1m'
-                }, {
-                    type: 'month',
-                    count: 6,
-                    text: '6m'
-                }, {
-                    type: 'year',
-                    count: 1,
-                    text: '1y'
-                }, {
-                    type: 'all',
-                    text: 'All'
-                }],
-                selected: 2
+                selected: 1
             },
 
             title: {
                 text: '{item} Historical'
+            },
+
+            line: {
+                cropThreshold: 500,
+                turboThreshold: 6000
             },
 
             yAxis: [{
@@ -80,7 +55,7 @@ $(function () {
                     x: -3
                 },
                 title: {
-                    text: 'OHLC'
+                    text: 'Price'
                 },
                 height: '60%',
                 lineWidth: 2
@@ -98,6 +73,12 @@ $(function () {
                 lineWidth: 2
             }],
 
+            xAxis: [{
+                ordinal: false
+            }, {
+                ordinal: false
+            }],
+
             series: [{
                 type: 'line',
                 name: '{item}',
@@ -106,21 +87,21 @@ $(function () {
                     units: groupingUnits
                 }
             }, {
+                dataGrouping: {
+                    units: groupingUnits
+                },
                 type: 'column',
                 name: 'Volume',
                 data: volume,
                 yAxis: 1,
-                dataGrouping: {
-                    units: groupingUnits
-                }
             }]
         });
     });
 });</script>
 </head>
-<body style="height:100%; width:100%; margin:0; padding:10px">
+<body style="height:100%; width:100%; margin:0;">
 <script src="https://code.highcharts.com/stock/highstock.js"></script>
 <script src="http://code.highcharts.com/modules/exporting.js"></script>
-<div id="container" style="height: 100%; min-height: 600px; min-width: 800px"></div>
+<div id="container" style="height: 100%; min-height: 600px; min-width: 600px; margin: 0 auto;"></div>
 </body>
 </html>
