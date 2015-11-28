@@ -46,7 +46,7 @@ public class DatabaseManager
     {
       c = this._source.getConnection();
       // TODO eliminate player UUID redundancy
-      c.createStatement().execute("CREATE TABLE IF NOT EXISTS items (id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL, name VARCHAR(32) NOT NULL, " +
+      /*c.createStatement().execute("CREATE TABLE IF NOT EXISTS items (id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL, name VARCHAR(32) NOT NULL, " +
           "nbt_hash_b64 CHAR(28) NOT NULL, durability INT NOT NULL, display_name VARCHAR(32), mat_name VARCHAR(32) NOT NULL, UNIQUE (name), UNIQUE (nbt_hash_b64)) ENGINE=InnoDB");
       c.createStatement().execute("CREATE TABLE IF NOT EXISTS equity_buy_orders (id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL, player_uuid BINARY(16) NOT NULL, " +
           "item_id INT UNSIGNED NOT NULL, quantity INT UNSIGNED NOT NULL, offer_value REAL NOT NULL, ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
@@ -63,8 +63,8 @@ public class DatabaseManager
           "INDEX lore_i (lore)) ENGINE=InnoDB");
       c.createStatement().execute("CREATE TABLE IF NOT EXISTS item_lore_assoc (id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL, item_id INT UNSIGNED NOT NULL, " +
           "lore_id INT UNSIGNED NOT NULL, INDEX item_id_i(item_id), CONSTRAINT FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE, " +
-          "CONSTRAINT FOREIGN KEY (lore_id) REFERENCES item_lore(id))");
-      /*c.createStatement().execute("CREATE TABLE IF NOT EXISTS player_uuids (id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL, uuid BINARY(16) NOT NULL, UNIQUE (uuid), " +
+          "CONSTRAINT FOREIGN KEY (lore_id) REFERENCES item_lore(id))");*/
+      c.createStatement().execute("CREATE TABLE IF NOT EXISTS player_uuids (id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL, uuid BINARY(16) NOT NULL, UNIQUE (uuid), " +
           "INDEX uuid_i(uuid)) ENGINE=InnoDB");
       c.createStatement().execute("CREATE TABLE IF NOT EXISTS items (id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL, name VARCHAR(32) NOT NULL, " +
           "nbt_hash_b64 CHAR(28) NOT NULL, durability INT NOT NULL, display_name VARCHAR(32), mat_name VARCHAR(32) NOT NULL, UNIQUE (name), UNIQUE (nbt_hash_b64)) ENGINE=InnoDB");
@@ -87,7 +87,7 @@ public class DatabaseManager
           "INDEX lore_i (lore)) ENGINE=InnoDB");
       c.createStatement().execute("CREATE TABLE IF NOT EXISTS item_lore_assoc (id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL, item_id INT UNSIGNED NOT NULL, " +
           "lore_id INT UNSIGNED NOT NULL, INDEX item_id_i(item_id), CONSTRAINT FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE, " +
-          "CONSTRAINT FOREIGN KEY (lore_id) REFERENCES item_lore(id))");*/
+          "CONSTRAINT FOREIGN KEY (lore_id) REFERENCES item_lore(id))");
     } finally {
       if (c != null)
         c.close();

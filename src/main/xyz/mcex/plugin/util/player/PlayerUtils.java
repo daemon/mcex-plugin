@@ -1,4 +1,4 @@
-package xyz.mcex.plugin.util;
+package xyz.mcex.plugin.util.player;
 
 import java.io.*;
 import java.util.UUID;

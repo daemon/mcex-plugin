@@ -2,7 +2,8 @@ package xyz.mcex.plugin.equity.database;
 
 import xyz.mcex.plugin.DatabaseManager;
 import xyz.mcex.plugin.Database;
-import xyz.mcex.plugin.util.PlayerUtils;
+import xyz.mcex.plugin.util.player.PlayerDatabase;
+import xyz.mcex.plugin.util.player.PlayerUtils;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -49,19 +50,13 @@ public class EquityDatabase extends Database
       RegisteredItem registeredItem = itemDb.getItem(itemName, conn);
       int rowId = registeredItem.id;
 
-      byte[] uuidBytes;
-      try
-      {
-        uuidBytes = PlayerUtils.uuidToBytes(playerUuid);
-      } catch (IOException e)
-      {
-        return new PutOrderResponse(PutOrderResponse.ResponseCode.FAILURE_NOT_FOUND);
-      }
+      PlayerDatabase playerDb = new PlayerDatabase(this.manager());
+      int playerId = playerDb.fetchPlayerId(playerUuid, conn);
 
       // Attempt to merge with existing orders
       getIsomorphicOrderStmt = this._createGetOrderStmt(conn, isBuy);
       getIsomorphicOrderStmt.setDouble(1, price);
-      getIsomorphicOrderStmt.setBinaryStream(2, new ByteArrayInputStream(uuidBytes), 16);
+      getIsomorphicOrderStmt.setInt(2, playerId);
       getIsomorphicOrderStmt.setInt(3, rowId);
 
       ResultSet isoRs = getIsomorphicOrderStmt.executeQuery();
@@ -87,8 +82,8 @@ public class EquityDatabase extends Database
       int totalMoney = 0;
       int totalQuantity = 0;
       int orderDelta = 0;
-      InputStream uuidStream = null;
       int orderItemId = 0;
+      int lastPlayerId = -1;
 
       OrderHistoryDatabase orderHistoryDb = new OrderHistoryDatabase(this.manager());
       Stack<Integer> orderDeltas = new Stack<>();
@@ -99,16 +94,7 @@ public class EquityDatabase extends Database
           break;
 
         int orderId = getOrderRs.getInt(1);
-        uuidStream = getOrderRs.getBinaryStream(2);
-        UUID orderUuid = null;
-        try
-        {
-          orderUuid = PlayerUtils.streamToUuid(uuidStream);
-        } catch (IOException e)
-        {
-          e.printStackTrace();
-          return new PutOrderResponse(PutOrderResponse.ResponseCode.FAILURE_SQL);
-        }
+        int orderPlayerId = getOrderRs.getInt(2);
 
         orderItemId = getOrderRs.getInt(3);
         int orderQuantity = getOrderRs.getInt(4);
@@ -120,19 +106,21 @@ public class EquityDatabase extends Database
         try
         {
           if (isBuy)
-            orderHistoryDb.logTrade(conn, orderUuid, playerUuid, orderDelta, orderPrice, rowId);
+            orderHistoryDb.logTrade(conn, orderPlayerId, playerId, orderDelta, orderPrice, rowId);
           else
-            orderHistoryDb.logTrade(conn, playerUuid, orderUuid, orderDelta, orderPrice, rowId);
+            orderHistoryDb.logTrade(conn, playerId, orderPlayerId, orderDelta, orderPrice, rowId);
 
         } catch (IOException e)
         {
           return new PutOrderResponse(PutOrderResponse.ResponseCode.FAILURE_SQL);
         }
 
-        orders.push(new Order(orderId, orderUuid, orderQuantity, orderPrice));
+        orders.push(new Order(orderId, playerDb.getPlayerUuid(orderPlayerId, conn), orderQuantity, orderPrice));
         orderDeltas.add(orderDelta);
         totalMoney += orderPrice * orderDelta;
         totalQuantity += orderDelta;
+
+        lastPlayerId = orderPlayerId;
       }
 
       getOrderRs.close();
@@ -143,13 +131,7 @@ public class EquityDatabase extends Database
         Order lastOrder = orders.peek();
         if (orderDelta != 0 && lastOrder.quantity != orderDelta)
         {
-          try
-          {
-            putOrderStmt.setBinaryStream(1, PlayerUtils.uuidToStream(lastOrder.playerUuid), 16);
-          } catch (IOException e)
-          {
-            return new PutOrderResponse(PutOrderResponse.ResponseCode.FAILURE_NOT_FOUND);
-          }
+          putOrderStmt.setInt(1, lastPlayerId);
           putOrderStmt.setInt(2, orderItemId);
           putOrderStmt.setInt(3, lastOrder.quantity - orderDelta);
           putOrderStmt.setDouble(4, lastOrder.price);
@@ -181,7 +163,7 @@ public class EquityDatabase extends Database
 
       putOrderStmt.close();
       putOrderStmt = this._createInsertOrderStmt(conn, isBuy);
-      putOrderStmt.setBinaryStream(1, new ByteArrayInputStream(uuidBytes), 16);
+      putOrderStmt.setInt(1, playerId);
       putOrderStmt.setInt(2, rowId);
       putOrderStmt.setInt(3, quantity);
       putOrderStmt.setDouble(4, price);
@@ -192,9 +174,14 @@ public class EquityDatabase extends Database
     } catch (SQLException e) {
       if (conn != null && !conn.getAutoCommit())
         conn.rollback();
+      e.printStackTrace();
       return new PutOrderResponse(PutOrderResponse.ResponseCode.FAILURE_SQL);
     } catch (ItemNotFoundException e) {
       return new PutOrderResponse(PutOrderResponse.ResponseCode.FAILURE_NOT_FOUND);
+    } catch (IOException e)
+    {
+      e.printStackTrace();
+      return new PutOrderResponse(PutOrderResponse.ResponseCode.FAILURE_SQL);
     } finally {
       if (updateOrderStmt != null)
         updateOrderStmt.close();
@@ -228,6 +215,7 @@ public class EquityDatabase extends Database
       conn = this.manager().getConnection();
       conn.setAutoCommit(false);
 
+      PlayerDatabase playerDb = new PlayerDatabase(this.manager());
       ItemDatabase db = new ItemDatabase(this.manager());
       int id = db.getItem(itemName, conn).id;
 
@@ -239,10 +227,10 @@ public class EquityDatabase extends Database
       rs = stmt.executeQuery();
       while (rs.next())
       {
-        InputStream uuidStream = rs.getBinaryStream(2);
+        int playerId = rs.getInt(2);
         try
         {
-          orders.add(new Order(rs.getInt(1), PlayerUtils.streamToUuid(uuidStream), rs.getInt(4), rs.getDouble(5)));
+          orders.add(new Order(rs.getInt(1), playerDb.getPlayerUuid(playerId, conn), rs.getInt(4), rs.getDouble(5)));
         } catch (IOException ignored) {}
       }
 

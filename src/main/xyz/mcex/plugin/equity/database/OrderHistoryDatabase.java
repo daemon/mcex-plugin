@@ -2,7 +2,7 @@ package xyz.mcex.plugin.equity.database;
 
 import xyz.mcex.plugin.Database;
 import xyz.mcex.plugin.DatabaseManager;
-import xyz.mcex.plugin.util.PlayerUtils;
+import xyz.mcex.plugin.util.player.PlayerUtils;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -20,12 +20,12 @@ public class OrderHistoryDatabase extends Database
     super(manager);
   }
 
-  public void logTrade(Connection conn, UUID seller, UUID buyer, int quantity, double soldValue, int itemRowId) throws SQLException, IOException
+  public void logTrade(Connection conn, int sellerId, int buyerId, int quantity, double soldValue, int itemRowId) throws SQLException, IOException
   {
     PreparedStatement stmt = conn.prepareStatement("INSERT INTO equity_sell_history (player_uuid_seller, player_uuid_buyer, item_id, quantity, offer_value) " +
         "VALUES (?, ?, ?, ?, ?)");
-    stmt.setBinaryStream(1, PlayerUtils.uuidToStream(seller), 16);
-    stmt.setBinaryStream(2, PlayerUtils.uuidToStream(buyer), 16);
+    stmt.setInt(1, sellerId);
+    stmt.setInt(2, buyerId);
     stmt.setInt(3, itemRowId);
     stmt.setInt(4, quantity);
     stmt.setDouble(5, soldValue);

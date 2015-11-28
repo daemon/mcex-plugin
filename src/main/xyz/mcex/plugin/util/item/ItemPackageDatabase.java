@@ -1,13 +1,13 @@
 package xyz.mcex.plugin.util.item;
 
-import org.bukkit.Material;
 import xyz.mcex.plugin.Database;
 import xyz.mcex.plugin.DatabaseManager;
 import xyz.mcex.plugin.equity.database.EquityDatabase;
 import xyz.mcex.plugin.equity.database.ItemDatabase;
 import xyz.mcex.plugin.equity.database.ItemNotFoundException;
 import xyz.mcex.plugin.equity.database.RegisteredItem;
-import xyz.mcex.plugin.util.PlayerUtils;
+import xyz.mcex.plugin.util.player.PlayerDatabase;
+import xyz.mcex.plugin.util.player.PlayerUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -17,7 +17,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.UUID;
 
 public class ItemPackageDatabase extends Database
@@ -39,8 +38,8 @@ public class ItemPackageDatabase extends Database
       PreparedStatement queueStmt = connection.prepareStatement("INSERT INTO item_package_queue (player_uuid, item_id, quantity) VALUES (?, ?, ?) " +
           "ON DUPLICATE KEY UPDATE quantity=quantity + ?");
 
-      ByteArrayInputStream stream = PlayerUtils.uuidToStream(itemPackage.receiver);
-      queueStmt.setBinaryStream(1, stream, 16);
+      PlayerDatabase pDb = new PlayerDatabase(this.manager());
+      queueStmt.setInt(1, pDb.fetchPlayerId(itemPackage.receiver, connection));
       queueStmt.setInt(2, itemPackage.item.id);
       queueStmt.setInt(3, itemPackage.quantity);
       queueStmt.setInt(4, itemPackage.quantity);
@@ -65,7 +64,8 @@ public class ItemPackageDatabase extends Database
       ItemDatabase itemDb = new ItemDatabase(this.manager());
 
       getStmt = connection.prepareStatement("SELECT item_id, quantity, id FROM item_package_queue WHERE player_uuid = ?");
-      getStmt.setBinaryStream(1, PlayerUtils.uuidToStream(playerUuid));
+      PlayerDatabase pDb = new PlayerDatabase(this.manager());
+      getStmt.setInt(1, pDb.fetchPlayerId(playerUuid, connection));
 
       rs = getStmt.executeQuery();
       while (rs.next())
@@ -104,7 +104,9 @@ public class ItemPackageDatabase extends Database
       connection = this.manager().getConnection();
       connection.setAutoCommit(false);
       getStmt = connection.prepareStatement("SELECT item_id, quantity, id FROM item_package_queue WHERE player_uuid = ? LIMIT ?, 1 FOR UPDATE");
-      getStmt.setBinaryStream(1, PlayerUtils.uuidToStream(playerUuid), 16);
+      PlayerDatabase pDb = new PlayerDatabase(this.manager());
+
+      getStmt.setInt(1, pDb.fetchPlayerId(playerUuid, connection));
       getStmt.setInt(2, packageNo - 1);
 
       rs = getStmt.executeQuery();
