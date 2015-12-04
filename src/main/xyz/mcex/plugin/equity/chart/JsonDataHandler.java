@@ -34,7 +34,7 @@ public class JsonDataHandler implements Handler<RoutingContext>
     {
       StringJoiner joiner = new StringJoiner(",", "[", "]");
       String volume = String.valueOf(trade.quantity);
-      String price = String.valueOf((trade.value) / 2);
+      String price = String.valueOf(trade.value);
       String timestamp = String.valueOf(trade.timeStamp);
 
       joiner.add(timestamp).add(price).add(volume);

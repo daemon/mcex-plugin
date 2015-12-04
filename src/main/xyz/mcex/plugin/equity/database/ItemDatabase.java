@@ -34,6 +34,10 @@ public class ItemDatabase extends Database
   {
     Connection conn = null;
     PreparedStatement stmt = null;
+    PreparedStatement loreInsertStmt = null;
+    PreparedStatement loreGetIdStmt = null;
+    PreparedStatement loreInsAssocStmt = null;
+    ResultSet rs = null;
 
     if (alias == null)
       alias = itemStack.getData().getItemType().name();
@@ -64,6 +68,45 @@ public class ItemDatabase extends Database
           stmt.setString(4, null);
         stmt.setString(5, itemStack.getData().getItemType().name());
         stmt.execute();
+
+        RegisteredItem item = null;
+        try
+        {
+          item = this.getItem(alias, conn);
+        } catch (ItemNotFoundException e1)
+        {
+          throw new SQLException("Error inserting item into database");
+        }
+
+        if (!itemStack.hasItemMeta() || !itemStack.getItemMeta().hasLore())
+          return;
+
+        List<String> lores = itemStack.getItemMeta().getLore();
+        List<Integer> loreIds = new LinkedList<>();
+        loreInsertStmt = this._createInsertItemLoreStmt(conn);
+        loreGetIdStmt = this._createGetItemLoreIdStmt(conn);
+        for (String lore : lores)
+        {
+          loreInsertStmt.setString(1, lore);
+          loreInsertStmt.execute();
+
+          loreGetIdStmt.setString(1, lore);
+          rs = loreGetIdStmt.executeQuery();
+          if (!rs.next())
+            throw new SQLException("Couldn't insert item lore");
+
+          loreIds.add(rs.getInt(1));
+          rs.close();
+        }
+
+        loreInsAssocStmt = this._createInsertItemLoreAssocStmt(conn);
+        for (Integer loreId : loreIds)
+        {
+          loreInsAssocStmt.setInt(1, item.id);
+          loreInsAssocStmt.setInt(2, loreId);
+          loreInsAssocStmt.execute();
+        }
+
         conn.commit();
         return;
       }
@@ -73,6 +116,14 @@ public class ItemDatabase extends Database
       if (conn != null)
         conn.rollback();
     } finally {
+      if (rs != null)
+        rs.close();
+      if (loreGetIdStmt != null)
+        loreGetIdStmt.close();
+      if (loreInsAssocStmt != null)
+        loreInsAssocStmt.close();
+      if (loreInsertStmt != null)
+        loreInsertStmt.close();
       if (stmt != null)
         stmt.close();
       if (conn != null)
@@ -176,17 +227,22 @@ public class ItemDatabase extends Database
 
   private PreparedStatement _createInsertItemLoreStmt(Connection connection) throws SQLException
   {
-    return connection.prepareStatement("INSERT INTO item_lore (lore) VALUES (?)");
+    return connection.prepareStatement("INSERT INTO item_lore (lore) VALUES (?) ON DUPLICATE KEY UPDATE id=id");
   }
 
   private PreparedStatement _createInsertItemLoreAssocStmt(Connection connection) throws SQLException
   {
-    return connection.prepareStatement("INSERT INTO item_lore_assoc (item_id, lore_id) VALUES (?, ?)");
+    return connection.prepareStatement("INSERT INTO item_lore_assoc (item_id, lore_id) VALUES (?, ?) ON DUPLICATE KEY UPDATE id=id");
   }
 
   private PreparedStatement _createGetItemLoreStmt(Connection connection) throws SQLException
   {
     return connection.prepareStatement("SELECT lore FROM item_lore INNER JOIN item_lore_assoc ON item_lore_assoc.lore_id=item_lore.id WHERE item_lore_assoc.item_id=? LOCK IN SHARE MODE");
+  }
+
+  private PreparedStatement _createGetItemLoreIdStmt(Connection connection) throws SQLException
+  {
+    return connection.prepareStatement("SELECT id FROM item_lore WHERE lore=?");
   }
 
   private PreparedStatement _createGetItemStmt(Connection connection) throws SQLException
