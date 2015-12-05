@@ -1,5 +1,6 @@
 package xyz.mcex.plugin.equity.database;
 
+import org.bukkit.entity.Player;
 import xyz.mcex.plugin.DatabaseManager;
 import xyz.mcex.plugin.Database;
 import xyz.mcex.plugin.util.player.PlayerDatabase;
@@ -26,6 +27,46 @@ public class EquityDatabase extends Database
     buffer.put(bytes);
     buffer.flip();
     return buffer.getLong();
+  }
+
+  public GetOrderResponse getOrders(UUID playerUuid, int limit, boolean isBuy) throws SQLException
+  {
+    Connection conn = null;
+    PreparedStatement getOrderStmt = null;
+    ResultSet rs = null;
+    try
+    {
+      conn = this.manager().getConnection();
+      PlayerDatabase pDb = new PlayerDatabase(this.manager());
+      int playerId = pDb.fetchPlayerId(playerUuid, conn);
+
+      getOrderStmt = this._createGetOrdersByPlayer(conn, isBuy);
+      getOrderStmt.setInt(1, playerId);
+      getOrderStmt.setInt(2, limit);
+      rs = getOrderStmt.executeQuery();
+
+      ItemDatabase db = new ItemDatabase(this.manager());
+
+      List<Order> orders = new LinkedList<>();
+      while(rs.next())
+      {
+        RegisteredItem item = db.getItem(rs.getInt(2), conn);
+        orders.add(new Order(rs.getInt(1), playerUuid, rs.getInt(4), rs.getDouble(5), item));
+      }
+
+      return new GetOrderResponse(GetOrderResponse.ResponseCode.OK, orders);
+    } catch (IOException e)
+    {
+      throw new SQLException("Invalid UUID format!");
+    } catch (ItemNotFoundException e)
+    {
+      throw new SQLException("Error: Inconsistent database, turn referential integrity checking on!");
+    } finally {
+      if (getOrderStmt != null)
+        getOrderStmt.close();
+      if (conn != null)
+        conn.close();
+    }
   }
 
   private PutOrderResponse putOrder(UUID playerUuid, String itemName, int quantity, double price, boolean isBuy) throws SQLException
@@ -115,7 +156,7 @@ public class EquityDatabase extends Database
           return new PutOrderResponse(PutOrderResponse.ResponseCode.FAILURE_SQL);
         }
 
-        orders.push(new Order(orderId, playerDb.getPlayerUuid(orderPlayerId, conn), orderQuantity, orderPrice));
+        orders.push(new Order(orderId, playerDb.getPlayerUuid(orderPlayerId, conn), orderQuantity, orderPrice, registeredItem));
         orderDeltas.add(orderDelta);
         totalMoney += orderPrice * orderDelta;
         totalQuantity += orderDelta;
@@ -138,7 +179,7 @@ public class EquityDatabase extends Database
           putOrderStmt.execute();
 
           orders.pop();
-          orders.push(new Order(lastOrder.rowId, lastOrder.playerUuid, lastOrder.quantity - orderDelta, lastOrder.price));
+          orders.push(new Order(lastOrder.rowId, lastOrder.playerUuid, lastOrder.quantity - orderDelta, lastOrder.price, registeredItem));
         }
 
         deleteOrdersStmt = this._createDeleteOrdersStmt(conn, !isBuy);
@@ -217,7 +258,9 @@ public class EquityDatabase extends Database
 
       PlayerDatabase playerDb = new PlayerDatabase(this.manager());
       ItemDatabase db = new ItemDatabase(this.manager());
-      int id = db.getItem(itemName, conn).id;
+
+      RegisteredItem registeredItem = db.getItem(itemName, conn);
+      int id = registeredItem.id;
 
       stmt = this._createGetOrdersByLimit(conn, isBuy);
       stmt.setInt(1, id);
@@ -230,7 +273,7 @@ public class EquityDatabase extends Database
         int playerId = rs.getInt(2);
         try
         {
-          orders.add(new Order(rs.getInt(1), playerDb.getPlayerUuid(playerId, conn), rs.getInt(4), rs.getDouble(5)));
+          orders.add(new Order(rs.getInt(1), playerDb.getPlayerUuid(playerId, conn), rs.getInt(4), rs.getDouble(5), registeredItem));
         } catch (IOException ignored) {}
       }
 
@@ -303,6 +346,14 @@ public class EquityDatabase extends Database
       return connection.prepareStatement("SELECT id FROM equity_buy_orders WHERE offer_value = ? AND player_uuid = ? AND item_id = ?");
     else
       return connection.prepareStatement("SELECT id FROM equity_sell_orders WHERE offer_value = ? AND player_uuid = ? AND item_id = ?");
+  }
+
+  private PreparedStatement _createGetOrdersByPlayer(Connection connection, boolean isBuy) throws SQLException
+  {
+    if (isBuy)
+      return connection.prepareStatement("SELECT * FROM equity_buy_orders WHERE player_uuid = ? LIMIT ?, 6");
+    else
+      return connection.prepareStatement("SELECT * FROM equity_sell_orders WHERE player_uuid = ? LIMIT ?, 6");
   }
 
   private PreparedStatement _createInsertOrderStmt(Connection connection, boolean isBuy) throws SQLException

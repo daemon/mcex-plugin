@@ -3,6 +3,7 @@ package xyz.mcex.plugin.equity;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -11,6 +12,7 @@ import xyz.mcex.plugin.SubCommandExecutor;
 import xyz.mcex.plugin.equity.database.EquityDatabase;
 import xyz.mcex.plugin.equity.database.PutOrderAsyncTask;
 import xyz.mcex.plugin.equity.database.PutOrderResponse;
+import xyz.mcex.plugin.equity.event.PlayerEquityTradeEvent;
 import xyz.mcex.plugin.message.MessageAlertColor;
 import xyz.mcex.plugin.message.Messages;
 
@@ -84,6 +86,12 @@ public class BuyCommand implements SubCommandExecutor
         double refund = response.totalQuantity * rate - response.totalMoney;
         if (refund > 0.000001)
           this._economy.depositPlayer(p, refund);
+
+        response.playerUuidToQuantity.forEach((uuid, quant) -> {
+          OfflinePlayer seller = Bukkit.getOfflinePlayer(uuid);
+          double offerValue = response.playerUuidToMoney.get(uuid) / quant;
+          Bukkit.getPluginManager().callEvent(new PlayerEquityTradeEvent(seller, p, response.item, quant, offerValue));
+        });
       }
     });
 

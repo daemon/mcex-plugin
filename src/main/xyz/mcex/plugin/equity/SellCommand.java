@@ -2,6 +2,7 @@ package xyz.mcex.plugin.equity;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -11,6 +12,7 @@ import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.plugin.java.JavaPlugin;
 import xyz.mcex.plugin.SubCommandExecutor;
 import xyz.mcex.plugin.equity.database.*;
+import xyz.mcex.plugin.equity.event.PlayerEquityTradeEvent;
 import xyz.mcex.plugin.message.MessageAlertColor;
 import xyz.mcex.plugin.message.Messages;
 import xyz.mcex.plugin.util.item.ItemNbtHash;
@@ -45,7 +47,6 @@ public class SellCommand implements SubCommandExecutor
         continue;
 
       ItemNbtHash hash = ItemNbtHash.from(is);
-      System.out.println(is.getItemMeta().getDisplayName() + " " + is.getItemMeta().getLore());
       if (hash == null)
         continue;
 
@@ -137,6 +138,12 @@ public class SellCommand implements SubCommandExecutor
       {
         ItemStack[] refund = item.createItemStacks(finalQuantity);
         pInv.addItem(refund);
+      } else {
+        response.playerUuidToQuantity.forEach((uuid, quant) -> {
+          OfflinePlayer buyer = Bukkit.getOfflinePlayer(uuid);
+          double offerValue = response.playerUuidToMoney.get(uuid) / quant;
+          Bukkit.getPluginManager().callEvent(new PlayerEquityTradeEvent(p, buyer, response.item, quant, offerValue));
+        });
       }
     });
 
