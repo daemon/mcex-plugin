@@ -82,7 +82,6 @@ public class BuyCommand implements SubCommandExecutor
       else
       {
         double rate = finalOfferVal / finalQuantity;
-        Bukkit.getLogger().info(response.totalQuantity + " " + rate + " " + response.totalMoney);
         double refund = response.totalQuantity * rate - response.totalMoney;
         if (refund > 0.000001)
           this._economy.depositPlayer(p, refund);
@@ -102,7 +101,7 @@ public class BuyCommand implements SubCommandExecutor
   @Override
   public String getUsage()
   {
-    return "/mcex buy <item name> <quantity> [offer value]";
+    return "/mcex buy <item name> <quantity> <offer value>";
   }
 
   @Override

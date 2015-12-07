@@ -27,7 +27,7 @@ public class AccountCommand implements SubCommandExecutor
   @Override
   public String getUsage()
   {
-    return "/mcex account [buy|sell]";
+    return "/mcex account <buy|sell>";
   }
 
   @Override
@@ -50,7 +50,9 @@ public class AccountCommand implements SubCommandExecutor
 
     Player p = (Player) sender;
     boolean isBuy = args[1].equalsIgnoreCase("buy");
-    String prelude = isBuy ? "buy" : "sell";
+    if (!isBuy && !args[1].equalsIgnoreCase("sell"))
+      return false;
+    String prelude = args[1].toLowerCase();
 
     int pageNo = 0;
     if (args.length >= 3)

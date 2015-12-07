@@ -38,13 +38,14 @@ public class AccountPages extends BufferedDatabasePages
     }
 
     StringBuilder builder = new StringBuilder();
-    int orderNo = 1;
+    int orderNo = index * 6 + 1;
     for (Order order : response.orders)
     {
       builder.append(ChatColor.YELLOW).append(orderNo).append(") ");
       builder.append(ChatColor.WHITE).append(order.quantity).append(" x ").append(order.item.alias);
       builder.append(" at ").append(ChatColor.GOLD).append("$").append(Math.round(order.price * 100) / 100.0)
           .append(ChatColor.WHITE).append(" each\n");
+      ++orderNo;
     }
 
     return builder.toString();

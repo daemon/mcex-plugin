@@ -154,7 +154,7 @@ public class SellCommand implements SubCommandExecutor
   @Override
   public String getUsage()
   {
-    return "/mcex sell <item name> <quantity> [offer value]";
+    return "/mcex sell <item name> <quantity> <offer value>";
   }
 
   @Override

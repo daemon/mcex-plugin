@@ -26,7 +26,7 @@ public class RegisterItemCommand implements SubCommandExecutor
   @Override
   public String getUsage()
   {
-    return "/mcex additem <material name|hand [alias]>";
+    return "/mcex additem <material name|hand <alias>>";
   }
 
   @Override

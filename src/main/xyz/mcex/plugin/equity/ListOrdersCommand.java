@@ -24,7 +24,7 @@ public class ListOrdersCommand implements SubCommandExecutor
   @Override
   public String getUsage()
   {
-    return "/mcex list [buy|sell] <item name> <page number>";
+    return "/mcex list <buy|sell> <item name> [page number]";
   }
 
   @Override

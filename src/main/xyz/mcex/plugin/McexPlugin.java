@@ -6,6 +6,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 import xyz.mcex.plugin.account.AccountCommand;
+import xyz.mcex.plugin.account.CancelCommand;
 import xyz.mcex.plugin.equity.BuyCommand;
 import xyz.mcex.plugin.equity.ListOrdersCommand;
 import xyz.mcex.plugin.equity.RegisterItemCommand;
@@ -64,6 +65,7 @@ public class McexPlugin extends JavaPlugin
     baseCmd.registerCommand("admin", new AdminCommand());
     baseCmd.registerCommand("additem", new RegisterItemCommand(manager));
     baseCmd.registerCommand("account", new AccountCommand(this, manager));
+    baseCmd.registerCommand("cancel", new CancelCommand(this, manager));
     this.getCommand("mcex").setExecutor(baseCmd);
 
     Vertx.vertx().deployVerticle(new ChartVerticle(getConfig(), manager));
@@ -72,6 +74,5 @@ public class McexPlugin extends JavaPlugin
   @Override
   public void onDisable()
   {
-
   }
 }
