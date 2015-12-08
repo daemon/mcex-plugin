@@ -31,6 +31,11 @@ public class BaseCommand implements CommandExecutor
     this._helpPages = builder.toPages();
   }
 
+  public SubCommandExecutor getCommandExecutor(String subCommand)
+  {
+    return this._subcommandToExecutor.get(subCommand);
+  }
+
   public void registerCommand(String subCommand, SubCommandExecutor executor)
   {
     this._subcommandToExecutor.put(subCommand.toLowerCase(), executor);

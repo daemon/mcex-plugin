@@ -2,12 +2,14 @@ package xyz.mcex.plugin.equity.database;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import xyz.mcex.plugin.internals.Nullable;
 import xyz.mcex.plugin.util.item.ItemNbtHash;
 
 import java.util.List;
+import java.util.Map;
 
 public class RegisteredItem
 {
@@ -18,8 +20,10 @@ public class RegisteredItem
   public final String displayName;
   public final Material material;
   public final String alias;
+  private final Map<String, Integer> enchantNameToLevel;
 
-  RegisteredItem(int id, ItemNbtHash hash, int durability, List<String> lore, @Nullable String displayName, Material mat, String alias)
+  RegisteredItem(int id, ItemNbtHash hash, int durability, List<String> lore, @Nullable String displayName, Material mat, String alias,
+                 Map<String, Integer> enchantNameToLvl)
   {
     this.hash = hash;
     this.id = id;
@@ -28,6 +32,7 @@ public class RegisteredItem
     this.alias = alias;
     this.displayName = displayName;
     this.material = mat;
+    this.enchantNameToLevel = enchantNameToLvl;
   }
 
   public ItemStack[] createItemStacks(int quantity)
@@ -43,9 +48,12 @@ public class RegisteredItem
       ItemMeta meta = Bukkit.getItemFactory().getItemMeta(stacks[i].getType());
       if (this.displayName != null && this.displayName.length() != 0)
         meta.setDisplayName(this.displayName);
-      meta.setLore(this.lore);
+      if (!this.lore.isEmpty())
+        meta.setLore(this.lore);
 
-      if (!lore.isEmpty() || displayName != null)
+      this.enchantNameToLevel.forEach((enchantName, lvl) -> meta.addEnchant(Enchantment.getByName(enchantName), lvl, true));
+
+      if (!lore.isEmpty() || displayName != null || this.enchantNameToLevel.size() > 0)
         stacks[i].setItemMeta(meta);
 
       quantity -= Math.min(quantity, mss);

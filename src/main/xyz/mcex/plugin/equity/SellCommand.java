@@ -33,7 +33,7 @@ public class SellCommand implements SubCommandExecutor
     this._eqDb = db;
   }
 
-  private boolean properPruneInv(PlayerInventory inv, ItemStack item, int quantity)
+  private boolean properPruneInv(PlayerInventory inv, RegisteredItem item, int quantity)
   {
     ListIterator<ItemStack> li = inv.iterator();
     List<Integer> removeIndexes = new LinkedList<Integer>();
@@ -50,7 +50,7 @@ public class SellCommand implements SubCommandExecutor
       if (hash == null)
         continue;
 
-      if (!hash.equals(ItemNbtHash.from(item)))
+      if (!hash.equals(item.hash))
         continue;
 
       if (is.getAmount() <= quantity)
@@ -119,10 +119,9 @@ public class SellCommand implements SubCommandExecutor
       return true;
     }
 
-
     PlayerInventory pInv = p.getInventory();
-    System.out.println(item.createItemStacks(1)[0].getItemMeta().getDisplayName() + " " + item.createItemStacks(1)[0].getItemMeta().getLore());
-    if (!this.properPruneInv(pInv, item.createItemStacks(1)[0], quantity))
+    // System.out.println(item.createItemStacks(1)[0].getItemMeta().getDisplayName() + " " + item.createItemStacks(1)[0].getItemMeta().getLore());
+    if (!this.properPruneInv(pInv, item, quantity))
     {
       p.sendMessage(MessageAlertColor.ERROR + "You don't have enough of that item to sell!");
       return true;

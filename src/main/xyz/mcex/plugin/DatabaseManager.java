@@ -88,6 +88,11 @@ public class DatabaseManager
       c.createStatement().execute("CREATE TABLE IF NOT EXISTS item_lore_assoc (id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL, item_id INT UNSIGNED NOT NULL, " +
           "lore_id INT UNSIGNED NOT NULL, INDEX item_id_i(item_id), CONSTRAINT FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE, " +
           "CONSTRAINT FOREIGN KEY (lore_id) REFERENCES item_lore(id))");
+      c.createStatement().execute("CREATE TABLE IF NOT EXISTS item_enchant (id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL, name VARCHAR(32) NOT NULL, UNIQUE (name)) ENGINE=InnoDB");
+      c.createStatement().execute("CREATE TABLE IF NOT EXISTS item_enchant_assoc (id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY NOT NULL, item_id INT UNSIGNED NOT NULL, " +
+          "enchant_id INT UNSIGNED NOT NULL, level INT UNSIGNED NOT NULL, CONSTRAINT FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE, " +
+          "CONSTRAINT FOREIGN KEY (enchant_id) REFERENCES item_enchant(id) ON DELETE CASCADE, INDEX item_id_i(item_id)) ENGINE=InnoDB");
+
     } finally {
       if (c != null)
         c.close();

@@ -1,8 +1,6 @@
 package xyz.mcex.plugin.util.item;
 
-import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
-import xyz.mcex.plugin.equity.database.ItemNotFoundException;
 import xyz.mcex.plugin.equity.database.RegisteredItem;
 
 import java.util.UUID;

@@ -54,6 +54,7 @@ public class ListItemCommand implements SubCommandExecutor
       packages = this._ipDb.getPackages(p.getUniqueId());
     } catch (Exception e)
     {
+      e.printStackTrace();
       p.sendMessage(MessageAlertColor.ERROR + Messages.DATABASE_ERROR);
       return true;
     }

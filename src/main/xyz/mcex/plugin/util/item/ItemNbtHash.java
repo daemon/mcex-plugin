@@ -9,6 +9,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class ItemNbtHash
 {
@@ -31,6 +33,18 @@ public class ItemNbtHash
     ItemNbtHash hash = new ItemNbtHash();
     hash._digest = Base64.getDecoder().decode(b64Encode.getBytes());
     return hash;
+  }
+
+  public static ItemNbtHash from(byte[] digest)
+  {
+    ItemNbtHash hash = new ItemNbtHash();
+    hash._digest = digest;
+    return hash;
+  }
+
+  public byte[] digest()
+  {
+    return this._digest;
   }
 
   public String base64Digest()
@@ -61,6 +75,9 @@ public class ItemNbtHash
       digest.update(buf.array());
       digest.update(item.getData().getItemType().name().getBytes());
 
+      Set<String> orderedEnchants = new TreeSet<>();
+      item.getEnchantments().forEach((enchant, lvl) -> orderedEnchants.add(enchant.getName() + lvl));
+      orderedEnchants.forEach(enchant -> digest.update(enchant.getBytes()));
       return (this._digest = digest.digest());
     } catch (NoSuchAlgorithmException e)
     {
