@@ -12,7 +12,7 @@ import java.util.function.BiConsumer;
 
 public class PutOrderResponse
 {
-  public enum ResponseCode { OK, FAILURE_NOT_FOUND, FAILURE_SQL };
+  public enum ResponseCode { OK, FAILURE_NOT_FOUND, FAILURE_SQL, FAILURE_TOO_MANY_ORDERS };
   public final int totalMoney;
   public final int totalQuantity;
   public final ResponseCode responseCode;

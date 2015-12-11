@@ -29,6 +29,47 @@ public class EquityDatabase extends Database
     return buffer.getLong();
   }
 
+  public int countOrders(UUID playerUuid) throws SQLException
+  {
+    Connection conn = null;
+    PreparedStatement countPlayerStmt = null;
+    ResultSet rs = null;
+    try
+    {
+      conn = this.manager().getConnection();
+      conn.setAutoCommit(false);
+      PlayerDatabase playerDb = new PlayerDatabase(this.manager());
+      int playerId = playerDb.fetchPlayerId(playerUuid, conn);
+
+      countPlayerStmt = this._createCountOrdersStmt(conn);
+      countPlayerStmt.setInt(1, playerId);
+      countPlayerStmt.setInt(2, playerId);
+      rs = countPlayerStmt.executeQuery();
+      if (!rs.next())
+        throw new SQLException("Couldn't execute player count!");
+
+      conn.commit();
+      return rs.getInt(1);
+    } catch (IOException e)
+    {
+      throw new SQLException("Couldn't read player UUID");
+    } catch (SQLException e) {
+      if (conn != null)
+        conn.rollback();
+      throw e;
+    } finally {
+      if (countPlayerStmt != null)
+        countPlayerStmt.close();
+      if (rs != null)
+        rs.close();
+      if (conn != null)
+      {
+        conn.setAutoCommit(true);
+        conn.close();
+      }
+    }
+  }
+
   public boolean deleteOrder(UUID playerUuid, int orderPos, boolean isBuy) throws SQLException
   {
     Connection conn = null;
@@ -356,6 +397,12 @@ public class EquityDatabase extends Database
   public PutOrderResponse putSellOrder(UUID playerUuid, String itemName, int quantity, double price) throws SQLException
   {
     return this.putOrder(playerUuid, itemName, quantity, price, false);
+  }
+
+  private PreparedStatement _createCountOrdersStmt(Connection connection) throws SQLException
+  {
+    return connection.prepareStatement("SELECT COUNT(*) FROM ((SELECT * FROM equity_buy_orders WHERE player_uuid = ?) UNION " +
+        "(SELECT * FROM equity_sell_orders WHERE player_uuid = ?)) AS t1");
   }
 
   private PreparedStatement _createGetOrdersStmt(Connection connection, boolean isBuy) throws SQLException

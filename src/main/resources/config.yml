@@ -3,8 +3,21 @@ sql-user: user
 sql-password: password
 sql-database: database
 sql-hostname: localhost
+
+# Port to run web charts on. Should be greater than 1000.
 chart-port: 2015
+
+# Enable web charts
 chart-enabled: true
+
+# Your server hostname
 chart-url: 45.79.150.151
-sell-listing-limit: 25
-buy-listing-limit: 25
+
+# The total number of orders a player can list
+listing-limit: 25
+
+# Message to show players who have reached limit of listings
+listing-limit-msg: You've reached the maximum number of %d buy and sell orders.
+
+# Charge this amount of money per trade. This will probably have to be adjusted with inflation and whatnot.
+trade-commission: 7

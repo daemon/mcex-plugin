@@ -128,7 +128,8 @@ public class SellCommand implements SubCommandExecutor
     }
 
     p.sendMessage(MessageAlertColor.NOTIFY_AGNOSTIC + "Processing order...");
-    PutOrderAsyncTask task = new PutOrderAsyncTask(this._plugin, this._eqDb, p, itemName, quantity, offerVal / quantity, false);
+    PutOrderAsyncTask.OrderRequest orderRequest = PutOrderAsyncTask.makeOrderRequest(itemName, quantity, offerVal / quantity, false);
+    PutOrderAsyncTask task = new PutOrderAsyncTask(this._plugin, this._eqDb, p, orderRequest);
 
     final Integer finalQuantity = quantity;
     task.addObserver((o, arg) -> {

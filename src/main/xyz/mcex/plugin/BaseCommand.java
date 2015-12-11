@@ -24,6 +24,7 @@ public class BaseCommand implements CommandExecutor
     builder.addHelp("mcex cancel", "Cancel an order. See /mcex account for orders");
     builder.addHelp("mcex account", "View your current outstanding orders.");
     builder.addHelp("mcex list", "View current item prices.");
+    builder.addHelp("mcex chart", "View a graphical display of item prices.");
     builder.addHelp("mcex mailbox", "View your item mailbox for bought items.");
     builder.addHelp("mcex accept", "Accept an item package in your mailbox.");
     builder.addHelp("mcex help <command>", "Shows detailed help for an MCEX subcommand.");
