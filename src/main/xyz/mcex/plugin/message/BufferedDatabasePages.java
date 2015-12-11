@@ -26,5 +26,5 @@ public abstract class BufferedDatabasePages implements Pages
   {
   }
 
-  public abstract String getPage(int index) throws SQLException;
+  public abstract String getPage(int index);
 }

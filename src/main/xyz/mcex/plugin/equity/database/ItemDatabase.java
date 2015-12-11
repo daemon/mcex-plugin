@@ -20,6 +20,33 @@ public class ItemDatabase extends Database
     super(manager);
   }
 
+  public List<String> findByName(String prefix, int limit) throws SQLException
+  {
+    List<String> itemNames = new LinkedList<>();
+    Connection conn = null;
+    PreparedStatement stmt = null;
+    ResultSet rs = null;
+    try
+    {
+      conn = this.manager().getConnection();
+      stmt = this._createSearchItemByNameStmt(conn);
+      stmt.setString(1, prefix);
+      stmt.setInt(2, limit);
+      rs = stmt.executeQuery();
+
+      while (rs.next())
+        itemNames.add(rs.getString(2));
+      return itemNames;
+    } finally {
+      if (rs != null)
+        rs.close();
+      if (stmt != null)
+        stmt.close();
+      if (conn != null)
+        conn.close();
+    }
+  }
+
   public void addItem(String name) throws SQLException, ItemNotFoundException, DuplicateItemException
   {
     Material m = Material.getMaterial(name.toUpperCase());
@@ -365,5 +392,10 @@ public class ItemDatabase extends Database
   private PreparedStatement _createGetItemByIdStmt(Connection connection) throws SQLException
   {
     return connection.prepareStatement("SELECT * FROM items WHERE id = ? LOCK IN SHARE MODE");
+  }
+
+  private PreparedStatement _createSearchItemByNameStmt(Connection connection) throws SQLException
+  {
+    return connection.prepareStatement("SELECT * FROM items WHERE name LIKE CONCAT(?, '%') ORDER BY name ASC LIMIT ?, 6");
   }
 }

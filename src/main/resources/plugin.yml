@@ -5,6 +5,6 @@ depend: [Vault]
 commands:
     mcex:
         description: Base command for all MCEX-related things. Do /mcex help for more information.
-        usage: /mcex
+        usage: /mcex [page #]
         permission: mcex.cmd
         permission-message: No permission.

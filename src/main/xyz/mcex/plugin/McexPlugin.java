@@ -15,6 +15,7 @@ import xyz.mcex.plugin.equity.chart.ChartVerticle;
 import xyz.mcex.plugin.equity.database.EquityDatabase;
 import xyz.mcex.plugin.util.item.AcceptItemCommand;
 import xyz.mcex.plugin.util.item.ListItemCommand;
+import xyz.mcex.plugin.util.item.SearchItemCommand;
 
 import java.beans.PropertyVetoException;
 import java.sql.Connection;
@@ -66,6 +67,7 @@ public class McexPlugin extends JavaPlugin
     baseCmd.registerCommand("additem", new RegisterItemCommand(manager));
     baseCmd.registerCommand("account", new AccountCommand(this, manager));
     baseCmd.registerCommand("cancel", new CancelCommand(this, manager));
+    baseCmd.registerCommand("search", new SearchItemCommand(this, manager));
     this.getCommand("mcex").setExecutor(baseCmd);
 
     Vertx.vertx().deployVerticle(new ChartVerticle(getConfig(), manager));
