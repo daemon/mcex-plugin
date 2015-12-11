@@ -79,7 +79,7 @@ public class CancelCommand implements SubCommandExecutor
 
       Bukkit.getScheduler().runTask(this._plugin, () -> {
         if (success)
-          p.sendMessage(MessageAlertColor.NOTIY_SUCCESS + "Order was cancelled successfully!");
+          p.sendMessage(MessageAlertColor.NOTIFY_SUCCESS + "Order was cancelled successfully!");
         else
           p.sendMessage(MessageAlertColor.NOTIFY_AGNOSTIC + "That order number doesn't exist. Please see /mcex account");
       });

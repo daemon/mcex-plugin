@@ -69,7 +69,7 @@ public class RegisterItemCommand implements SubCommandExecutor
           database.addItem(handItem, args[2]);
         }
 
-        commandSender.sendMessage(MessageAlertColor.NOTIY_SUCCESS + alias.toUpperCase() + " added successfully.");
+        commandSender.sendMessage(MessageAlertColor.NOTIFY_SUCCESS + alias.toUpperCase() + " added successfully.");
       } catch (SQLException e) {
         e.printStackTrace();
         commandSender.sendMessage(MessageAlertColor.ERROR + Messages.DATABASE_ERROR);
@@ -84,7 +84,7 @@ public class RegisterItemCommand implements SubCommandExecutor
     try
     {
       database.addItem(args[1]);
-      commandSender.sendMessage(MessageAlertColor.NOTIY_SUCCESS + "Item added successfully");
+      commandSender.sendMessage(MessageAlertColor.NOTIFY_SUCCESS + "Item added successfully");
     } catch (SQLException e)
     {
       e.printStackTrace();

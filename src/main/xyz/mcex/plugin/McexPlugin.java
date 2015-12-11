@@ -7,10 +7,7 @@ import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 import xyz.mcex.plugin.account.AccountCommand;
 import xyz.mcex.plugin.account.CancelCommand;
-import xyz.mcex.plugin.equity.BuyCommand;
-import xyz.mcex.plugin.equity.ListOrdersCommand;
-import xyz.mcex.plugin.equity.RegisterItemCommand;
-import xyz.mcex.plugin.equity.SellCommand;
+import xyz.mcex.plugin.equity.*;
 import xyz.mcex.plugin.equity.chart.ChartVerticle;
 import xyz.mcex.plugin.equity.database.EquityDatabase;
 import xyz.mcex.plugin.util.item.AcceptItemCommand;
@@ -68,6 +65,7 @@ public class McexPlugin extends JavaPlugin
     baseCmd.registerCommand("account", new AccountCommand(this, manager));
     baseCmd.registerCommand("cancel", new CancelCommand(this, manager));
     baseCmd.registerCommand("search", new SearchItemCommand(this, manager));
+    baseCmd.registerCommand("chart", new ChartCommand(this, manager));
     this.getCommand("mcex").setExecutor(baseCmd);
 
     Vertx.vertx().deployVerticle(new ChartVerticle(getConfig(), manager));

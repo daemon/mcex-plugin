@@ -46,6 +46,14 @@ public class BuyCommand implements SubCommandExecutor
     String itemName = strings[1];
     Integer quantity = null;
     Double offerVal = null;
+
+    boolean offerPriceTotalSemantic = true;
+    if (strings[3].charAt(0) == '*')
+    {
+      strings[3] = strings[3].substring(1);
+      offerPriceTotalSemantic = false;
+    }
+
     try
     {
       quantity = Integer.parseInt(strings[2]);
@@ -60,6 +68,9 @@ public class BuyCommand implements SubCommandExecutor
       p.sendMessage(MessageAlertColor.ERROR + "Quantity and price must be positive!");
       return false;
     }
+
+    if (!offerPriceTotalSemantic)
+      offerVal *= quantity;
 
     double money = this._economy.getBalance(p);
     if (money < offerVal)

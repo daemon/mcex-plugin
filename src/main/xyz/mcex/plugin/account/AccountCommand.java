@@ -76,6 +76,8 @@ public class AccountCommand implements SubCommandExecutor
         text = MessageAlertColor.ERROR + Messages.DATABASE_ERROR;
       else if (text.equals(""))
         text = MessageAlertColor.NOTIFY_AGNOSTIC + "You have no " + prelude + " orders in your account.";
+      else
+        text += MessageAlertColor.INFO + "/mcex account " + prelude + " " + (finalPageNo + 2) + " for the next page.";
 
       final String finalText = text;
       Bukkit.getScheduler().runTask(this._plugin, () -> p.sendMessage(MessageAlertColor.INFO + "Your " + prelude + " orders\n" + finalText));

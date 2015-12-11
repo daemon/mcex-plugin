@@ -89,6 +89,14 @@ public class SellCommand implements SubCommandExecutor
     String itemName = strings[1];
     Integer quantity;
     Double offerVal;
+
+    boolean offerPriceTotalSemantic = true;
+    if (strings[3].charAt(0) == '*')
+    {
+      strings[3] = strings[3].substring(1);
+      offerPriceTotalSemantic = false;
+    }
+
     try
     {
       quantity = Integer.parseInt(strings[2]);
@@ -118,6 +126,9 @@ public class SellCommand implements SubCommandExecutor
       p.sendMessage(MessageAlertColor.ERROR + "Item doesn't exist!");
       return true;
     }
+
+    if (!offerPriceTotalSemantic)
+      offerVal *= quantity;
 
     PlayerInventory pInv = p.getInventory();
     // System.out.println(item.createItemStacks(1)[0].getItemMeta().getDisplayName() + " " + item.createItemStacks(1)[0].getItemMeta().getLore());

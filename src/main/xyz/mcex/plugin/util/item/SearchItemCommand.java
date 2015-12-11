@@ -64,7 +64,7 @@ public class SearchItemCommand implements SubCommandExecutor
       else if (message.length() == 0)
         message = MessageAlertColor.NOTIFY_AGNOSTIC + "You've reached the end of this database.";
       else
-        message += MessageAlertColor.NOTIFY_AGNOSTIC + "/mcex search " + query + " " + (finalPageNo + 2) + " for next page";
+        message += MessageAlertColor.INFO + "/mcex search " + query + " " + (finalPageNo + 2) + " for next page";
 
       final String finalMessage = message;
       Bukkit.getScheduler().runTask(this._plugin, () -> sender.sendMessage(finalMessage));

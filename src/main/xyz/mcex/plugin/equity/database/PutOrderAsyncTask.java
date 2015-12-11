@@ -124,13 +124,13 @@ public class PutOrderAsyncTask extends Observable implements Runnable
         case OK:
           int queuedQuantity  = _quantity - this._dbResponse.totalQuantity;
           if (queuedQuantity != 0)
-            player.sendMessage(MessageAlertColor.NOTIY_SUCCESS + "Listed " + queuedQuantity  + " items at $" + Math.round(queuedQuantity * _price * 100) / 100.0);
+            player.sendMessage(MessageAlertColor.NOTIFY_SUCCESS + "Listed " + queuedQuantity  + " items at $" + Math.round(queuedQuantity * _price * 100) / 100.0);
           if (_isBuy)
           {
             this._dbResponse.exerciseOrders(_economy);
             if (this._dbResponse.totalQuantity > 0)
             {
-              player.sendMessage(MessageAlertColor.NOTIY_SUCCESS + "Bought " + this._dbResponse.totalQuantity + " items for $"
+              player.sendMessage(MessageAlertColor.NOTIFY_SUCCESS + "Bought " + this._dbResponse.totalQuantity + " items for $"
                 + Math.round(this._dbResponse.totalMoney * 100) / 100.0);
               ItemPackage pkg = new ItemPackage(_playerUuid, this._dbResponse.item, this._dbResponse.totalQuantity);
               Bukkit.getScheduler().runTaskAsynchronously(_plugin, new DeliverItemPackageAsyncTask(this._itemDb, pkg));
@@ -140,7 +140,7 @@ public class PutOrderAsyncTask extends Observable implements Runnable
           {
             if (this._dbResponse.totalQuantity > 0)
             {
-              player.sendMessage(MessageAlertColor.NOTIY_SUCCESS + "Sold " + this._dbResponse.totalQuantity + " items for $"
+              player.sendMessage(MessageAlertColor.NOTIFY_SUCCESS + "Sold " + this._dbResponse.totalQuantity + " items for $"
                   + Math.round(this._dbResponse.totalMoney * 100) / 100.0);
               _economy.depositPlayer(player, this._dbResponse.totalMoney);
 

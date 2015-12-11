@@ -31,7 +31,7 @@ public class ChartVerticle extends AbstractVerticle
 
     Router router = Router.router(vertx);
     JsonDataHandler jsonHandler = new JsonDataHandler(this._manager);
-    router.route("/charts/:item/").handler(new ChartHandler(_config.getString("chart-url") + ":" + port, jsonHandler));
+    router.route("/charts/:item").handler(new ChartHandler(_config.getString("chart-url") + ":" + port, jsonHandler));
     router.route("/charts/:item/json").handler(jsonHandler);
 
     server.requestHandler(router::accept).listen(port);

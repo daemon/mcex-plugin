@@ -6,7 +6,6 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import xyz.mcex.plugin.message.MessageAlertColor;
 
-import java.sql.SQLException;
 import java.util.HashMap;
 
 /* This could be improved on (use async-then-sync model), but I think the typical use case will not be costly.
@@ -36,6 +35,6 @@ public class AcceptItemPackageTask implements Runnable
       p.getWorld().dropItem(p.getLocation(), itemStack);
     });
 
-    p.sendMessage(MessageAlertColor.NOTIY_SUCCESS + "Items accepted.");
+    p.sendMessage(MessageAlertColor.NOTIFY_SUCCESS + "Items accepted.");
   }
 }

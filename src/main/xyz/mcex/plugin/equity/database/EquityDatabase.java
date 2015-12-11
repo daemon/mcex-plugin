@@ -141,7 +141,7 @@ public class EquityDatabase extends Database
       List<Order> orders = new LinkedList<>();
       while(rs.next())
       {
-        RegisteredItem item = db.getItem(rs.getInt(2), conn);
+        RegisteredItem item = db.getItem(rs.getInt(3), conn);
         orders.add(new Order(rs.getInt(1), playerUuid, rs.getInt(4), rs.getDouble(5), item));
       }
 
