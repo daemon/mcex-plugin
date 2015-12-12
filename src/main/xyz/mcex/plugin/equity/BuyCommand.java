@@ -47,11 +47,11 @@ public class BuyCommand implements SubCommandExecutor
     Integer quantity = null;
     Double offerVal = null;
 
-    boolean offerPriceTotalSemantic = true;
-    if (strings[3].charAt(0) == '*')
+    boolean offerPriceTotalSemantic = false;
+    if (strings[3].charAt(0) == '/')
     {
       strings[3] = strings[3].substring(1);
-      offerPriceTotalSemantic = false;
+      offerPriceTotalSemantic = true;
     }
 
     try

@@ -1,5 +1,6 @@
 package xyz.mcex.plugin.util.player;
 
+import org.bukkit.Bukkit;
 import xyz.mcex.plugin.Database;
 import xyz.mcex.plugin.DatabaseManager;
 
@@ -32,7 +33,7 @@ public class PlayerDatabase extends Database
     }
 
     playerRs.close();
-    getPlayerIdStmt.setBinaryStream(1, PlayerUtils.uuidToStream(playerUuid));
+    getPlayerIdStmt.setBinaryStream(1, PlayerUtils.uuidToStream(playerUuid), 16);
     playerRs = getPlayerIdStmt.executeQuery();
     if (!playerRs.next())
       throw new SQLException("Failed to insert new player");
