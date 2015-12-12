@@ -1,6 +1,6 @@
 name: mcex
 main: xyz.mcex.plugin.McexPlugin
-version: 0.1
+version: 0.1.0
 depend: [Vault]
 commands:
     mcex:

@@ -11,13 +11,10 @@ chart-port: 2015
 chart-enabled: true
 
 # Your server hostname
-chart-url: 45.79.150.151
+chart-url: mc.example.com
 
 # The total number of orders a player can list
 listing-limit: 25
 
 # Message to show players who have reached limit of listings
 listing-limit-msg: You've reached the maximum number of %d buy and sell orders.
-
-# Charge this amount of money per trade. This will probably have to be adjusted with inflation and whatnot.
-trade-commission: 7
