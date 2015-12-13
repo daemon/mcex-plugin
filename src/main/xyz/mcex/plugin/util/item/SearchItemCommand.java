@@ -53,7 +53,7 @@ public class SearchItemCommand implements SubCommandExecutor
 
     SearchResultGui gui = new SearchResultGui(this._manager, args[1], (Player) sender, 0);
     MenuFlow flow = new MenuFlow(gui);
-    gui.setNextClickListener(gui.createListener(flow, 1));
+    gui.setNextClickListener(gui.createListener(flow, 0));
     gui.show();
 
     return true;

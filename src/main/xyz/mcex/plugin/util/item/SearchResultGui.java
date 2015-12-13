@@ -96,14 +96,14 @@ public class SearchResultGui extends NormalSequentialPanel
       if (action == Action.NEXT)
       {
         SearchResultGui newGui = new SearchResultGui(_itemDb.manager(), _query, player(), ++this._pageNum);
-        newGui.setNextClickListener(newGui.createListener(this._flow, this._pageNum + 1));
-        newGui.setBackClickListener(newGui.createListener(this._flow, this._pageNum - 1));
+        newGui.setNextClickListener(newGui.createListener(this._flow, this._pageNum));
+        newGui.setBackClickListener(newGui.createListener(this._flow, this._pageNum));
         this._flow.switchPanel(newGui);
       } else if (action == Action.BACK) {
         SearchResultGui newGui = new SearchResultGui(_itemDb.manager(), _query, player(), --this._pageNum);
-        newGui.setNextClickListener(newGui.createListener(this._flow, this._pageNum + 1));
+        newGui.setNextClickListener(newGui.createListener(this._flow, this._pageNum));
         if (_pageNum - 1 > 0)
-          newGui.setBackClickListener(newGui.createListener(this._flow, this._pageNum - 1));
+          newGui.setBackClickListener(newGui.createListener(this._flow, this._pageNum));
         this._flow.switchPanel(newGui);
       }
     }

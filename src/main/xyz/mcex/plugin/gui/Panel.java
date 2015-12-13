@@ -26,7 +26,7 @@ public abstract class Panel
 
   public void change(Panel other)
   {
-    Bukkit.getPluginManager().callEvent(new GuiVisibilityChangeEvent(this._player, other, false));
+    Bukkit.getPluginManager().callEvent(new GuiVisibilityChangeEvent(this._player, this, false));
     other.show();
   }
 
@@ -72,8 +72,8 @@ public abstract class Panel
       }
 
       Bukkit.getScheduler().runTask(McexPlugin.instance, () -> {
-        Bukkit.getPluginManager().callEvent(new GuiVisibilityChangeEvent(this._player, this, true));
         this._player.openInventory(this._gui);
+        Bukkit.getPluginManager().callEvent(new GuiVisibilityChangeEvent(this._player, this, true));
         this._dirty = false;
       });
     });
