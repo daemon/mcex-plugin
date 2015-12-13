@@ -68,7 +68,7 @@ public class SearchItemCommand implements SubCommandExecutor
         String queryText = query;
         if (args[1].charAt(0) == '%')
           queryText = "all";
-        message += MessageAlertColor.INFO + "/mcex search " + query + " " + (finalPageNo + 2) + " for next page";
+        message += MessageAlertColor.INFO + "/mcex search " + queryText + " " + (finalPageNo + 2) + " for next page";
       }
 
       final String finalMessage = message;

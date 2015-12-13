@@ -23,7 +23,7 @@ public class StringPages implements Pages
 
   public void printTo(CommandSender output, int pageIndex)
   {
-    if (pageIndex >= pages.size())
+    if (pageIndex >= pages.size() || pageIndex < 0)
     {
       output.sendMessage(MessageAlertColor.ERROR + "No such page number!");
       return;

@@ -59,6 +59,18 @@ public class ListItemCommand implements SubCommandExecutor
       return true;
     }
 
+    int pageNo = 0;
+    if (strings.length >= 3)
+    {
+      try
+      {
+        pageNo = Integer.parseInt(strings[2]) - 1;
+      } catch (NumberFormatException e) {
+        p.sendMessage(MessageAlertColor.ERROR + "Page number must be an integer.");
+        return true;
+      }
+    }
+
     if (packages.isEmpty())
     {
       p.sendMessage(MessageAlertColor.NOTIFY_AGNOSTIC + "Your mailbox is empty.");
@@ -74,8 +86,7 @@ public class ListItemCommand implements SubCommandExecutor
       ++i;
     }
 
-    // TODO page numbers
-    StringPages.from(builder.toString(), 6).printTo(p, 0);
+    StringPages.from(builder.toString(), 6).printTo(p, pageNo);
     return true;
   }
 }
