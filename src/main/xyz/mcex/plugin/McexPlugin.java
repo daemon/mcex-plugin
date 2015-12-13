@@ -10,6 +10,7 @@ import xyz.mcex.plugin.account.CancelCommand;
 import xyz.mcex.plugin.equity.*;
 import xyz.mcex.plugin.equity.chart.ChartVerticle;
 import xyz.mcex.plugin.equity.database.EquityDatabase;
+import xyz.mcex.plugin.gui.PanelClickListener;
 import xyz.mcex.plugin.util.item.AcceptItemCommand;
 import xyz.mcex.plugin.util.item.ListItemCommand;
 import xyz.mcex.plugin.util.item.SearchItemCommand;
@@ -20,9 +21,12 @@ import java.sql.SQLException;
 
 public class McexPlugin extends JavaPlugin
 {
+  public volatile static JavaPlugin instance = null;
+
   @Override
   public void onEnable()
   {
+    instance = this;
     this.saveDefaultConfig();
     this.getLogger().info("Enabling MCEX...");
     this.getLogger().info("Initializing tables...");
@@ -67,6 +71,8 @@ public class McexPlugin extends JavaPlugin
     baseCmd.registerCommand("search", new SearchItemCommand(this, manager));
     baseCmd.registerCommand("chart", new ChartCommand(this, manager));
     this.getCommand("mcex").setExecutor(baseCmd);
+
+    Bukkit.getPluginManager().registerEvents(new PanelClickListener(), this);
 
     Vertx.vertx().deployVerticle(new ChartVerticle(getConfig(), manager));
   }

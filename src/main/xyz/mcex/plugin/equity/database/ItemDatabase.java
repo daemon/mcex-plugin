@@ -20,23 +20,32 @@ public class ItemDatabase extends Database
     super(manager);
   }
 
-  public List<String> findByName(String prefix, int limit) throws SQLException
+  public List<RegisteredItem> findByName(String prefix, int limit, int nItems) throws SQLException
   {
-    List<String> itemNames = new LinkedList<>();
+    List<RegisteredItem> items = new LinkedList<>();
     Connection conn = null;
     PreparedStatement stmt = null;
     ResultSet rs = null;
     try
     {
       conn = this.manager().getConnection();
+      conn.setAutoCommit(false);
       stmt = this._createSearchItemByNameStmt(conn);
       stmt.setString(1, prefix);
       stmt.setInt(2, limit);
+      stmt.setInt(3, nItems);
       rs = stmt.executeQuery();
 
       while (rs.next())
-        itemNames.add(rs.getString(2));
-      return itemNames;
+        try
+        {
+          items.add(this.getItem(rs.getInt(1), conn));
+        } catch (ItemNotFoundException ignored) {}
+      return items;
+    } catch (SQLException e) {
+      if (conn != null)
+        conn.rollback();
+      throw e;
     } finally {
       if (rs != null)
         rs.close();
@@ -396,6 +405,6 @@ public class ItemDatabase extends Database
 
   private PreparedStatement _createSearchItemByNameStmt(Connection connection) throws SQLException
   {
-    return connection.prepareStatement("SELECT * FROM items WHERE name LIKE CONCAT(?, '%') ORDER BY name ASC LIMIT ?, 6");
+    return connection.prepareStatement("SELECT id FROM items WHERE name LIKE CONCAT(?, '%') ORDER BY name ASC LIMIT ?, ?");
   }
 }

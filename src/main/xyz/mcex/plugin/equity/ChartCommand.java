@@ -8,6 +8,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import xyz.mcex.plugin.DatabaseManager;
 import xyz.mcex.plugin.SubCommandExecutor;
 import xyz.mcex.plugin.equity.database.ItemDatabase;
+import xyz.mcex.plugin.equity.database.RegisteredItem;
 import xyz.mcex.plugin.message.MessageAlertColor;
 import xyz.mcex.plugin.message.Messages;
 
@@ -45,17 +46,16 @@ public class ChartCommand implements SubCommandExecutor
 
     sender.sendMessage(MessageAlertColor.NOTIFY_AGNOSTIC + "Processing...");
     Bukkit.getScheduler().runTaskAsynchronously(this._plugin, () -> {
-      List<String> matches;
       String message;
       FileConfiguration cfg = this._plugin.getConfig();
 
       try
       {
-        matches = this._itemDb.findByName(args[1], 0);
+        List<RegisteredItem> matches = this._itemDb.findByName(args[1], 0, 1);
         if (matches.size() == 0)
           message = MessageAlertColor.NOTIFY_AGNOSTIC + "No results found for '" + args[1] + "'";
         else
-          message = MessageAlertColor.NOTIFY_SUCCESS + "http://" + cfg.get("chart-url") + ":" + cfg.get("chart-port") + "/charts/" + matches.get(0).toLowerCase();
+          message = MessageAlertColor.NOTIFY_SUCCESS + "http://" + cfg.get("chart-url") + ":" + cfg.get("chart-port") + "/charts/" + matches.get(0).alias.toLowerCase();
       } catch (SQLException e)
       {
         message = MessageAlertColor.ERROR + Messages.DATABASE_ERROR;

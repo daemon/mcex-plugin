@@ -3,10 +3,12 @@ package xyz.mcex.plugin.util.item;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import xyz.mcex.plugin.DatabaseManager;
 import xyz.mcex.plugin.SubCommandExecutor;
 import xyz.mcex.plugin.equity.database.ItemDatabase;
+import xyz.mcex.plugin.gui.MenuFlow;
 import xyz.mcex.plugin.message.MessageAlertColor;
 import xyz.mcex.plugin.message.Messages;
 
@@ -26,7 +28,7 @@ public class SearchItemCommand implements SubCommandExecutor
   @Override
   public String getUsage()
   {
-    return "/mcex search <item name|all> [page #]";
+    return "/mcex search <item name|all>";
   }
 
   @Override
@@ -40,40 +42,19 @@ public class SearchItemCommand implements SubCommandExecutor
   {
     if (args.length < 2)
       return false;
-
-    int pageNo = 0;
-    if (args.length >= 3)
-      try
-      {
-        pageNo = Integer.parseInt(args[2]) - 1;
-      } catch (NumberFormatException e) {
-        sender.sendMessage(MessageAlertColor.ERROR + "The page number parameter must be an integer.");
-        return false;
-      }
+    else if (!(sender instanceof Player))
+    {
+      sender.sendMessage(MessageAlertColor.ERROR + Messages.PLAYER_CMD_ERROR);
+      return true;
+    }
 
     if (args[1].equalsIgnoreCase("all"))
       args[1] = "%";
-    String query = args[1];
-    sender.sendMessage(MessageAlertColor.NOTIFY_AGNOSTIC + "Processing...");
-    final int finalPageNo = pageNo;
-    Bukkit.getScheduler().runTaskAsynchronously(this._plugin, () -> {
-      SearchItemPages pages = new SearchItemPages(this._manager, query);
-      String message = pages.getPage(finalPageNo);
-      if (message == null)
-        message = MessageAlertColor.ERROR + Messages.DATABASE_ERROR;
-      else if (message.length() == 0)
-        message = MessageAlertColor.NOTIFY_AGNOSTIC + "You've reached the end of this database.";
-      else
-      {
-        String queryText = query;
-        if (args[1].charAt(0) == '%')
-          queryText = "all";
-        message += MessageAlertColor.INFO + "/mcex search " + queryText + " " + (finalPageNo + 2) + " for next page";
-      }
 
-      final String finalMessage = message;
-      Bukkit.getScheduler().runTask(this._plugin, () -> sender.sendMessage(finalMessage));
-    });
+    SearchResultGui gui = new SearchResultGui(this._manager, args[1], (Player) sender, 0);
+    MenuFlow flow = new MenuFlow(gui);
+    gui.setNextClickListener(gui.createListener(flow, 1));
+    gui.show();
 
     return true;
   }

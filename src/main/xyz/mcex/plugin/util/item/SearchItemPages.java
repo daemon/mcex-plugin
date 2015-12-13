@@ -6,6 +6,7 @@ import xyz.mcex.plugin.DatabaseManager;
 import xyz.mcex.plugin.equity.database.GetOrderResponse;
 import xyz.mcex.plugin.equity.database.ItemDatabase;
 import xyz.mcex.plugin.equity.database.Order;
+import xyz.mcex.plugin.equity.database.RegisteredItem;
 import xyz.mcex.plugin.internals.Nullable;
 import xyz.mcex.plugin.message.BufferedDatabasePages;
 
@@ -27,25 +28,25 @@ public class SearchItemPages extends BufferedDatabasePages
   @Override
   public @Nullable String getPage(int index)
   {
-    List<String> itemNames;
+    List<RegisteredItem> items;
     try
     {
-      itemNames = this._itemDb.findByName(this._itemName, index * 6);
+      items = this._itemDb.findByName(this._itemName, index * 6, 6);
     } catch (SQLException e)
     {
       e.printStackTrace();
       return null;
     }
 
-    if (itemNames == null)
+    if (items == null)
       return null;
 
     StringBuilder builder = new StringBuilder();
     int i = index * 6 + 1;
-    for (String name : itemNames)
+    for (RegisteredItem item : items)
     {
       builder.append(ChatColor.YELLOW).append(i).append(") ");
-      builder.append(ChatColor.WHITE).append(name.toUpperCase()).append("\n");
+      builder.append(ChatColor.WHITE).append(item.alias.toUpperCase()).append("\n");
       ++i;
     }
 

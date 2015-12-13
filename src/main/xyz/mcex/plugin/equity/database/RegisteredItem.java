@@ -53,9 +53,7 @@ public class RegisteredItem
 
       this.enchantNameToLevel.forEach((enchantName, lvl) -> meta.addEnchant(Enchantment.getByName(enchantName), lvl, true));
 
-      if (!lore.isEmpty() || displayName != null || this.enchantNameToLevel.size() > 0)
-        stacks[i].setItemMeta(meta);
-
+      stacks[i].setItemMeta(meta);
       quantity -= Math.min(quantity, mss);
     }
 
