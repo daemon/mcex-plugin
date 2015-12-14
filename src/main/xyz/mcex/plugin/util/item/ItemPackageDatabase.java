@@ -11,10 +11,7 @@ import xyz.mcex.plugin.util.player.PlayerUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
@@ -50,8 +47,45 @@ public class ItemPackageDatabase extends Database
     }
   }
 
+  public void reducePackage(ItemPackage itemPackage) throws SQLException, ItemNotFoundException, IOException
+  {
+    Connection connection = null;
+    try
+    {
+      connection = this.manager().getConnection();
+      PreparedStatement queueStmt = connection.prepareStatement("UPDATE item_package_queue SET quantity=quantity - ? WHERE player_uuid=? " +
+          "AND item_id = ?");
+
+      PlayerDatabase pDb = new PlayerDatabase(this.manager());
+      queueStmt.setInt(1, itemPackage.quantity);
+      queueStmt.setInt(2, pDb.fetchPlayerId(itemPackage.receiver, connection));
+      queueStmt.setInt(3, itemPackage.item.id);
+      queueStmt.execute();
+    } finally {
+      if (connection != null)
+        connection.close();
+    }
+  }
+
+  public void cleanupNullPackages() throws SQLException, ItemNotFoundException, IOException
+  {
+    Connection connection = null;
+    Statement stmt = null;
+    try
+    {
+      connection = this.manager().getConnection();
+      stmt = connection.createStatement();
+      stmt.execute("DELETE FROM item_package_queue WHERE quantity=0");
+    } finally {
+      if (stmt != null)
+        stmt.close();
+      if (connection != null)
+        connection.close();
+    }
+  }
+
   // TODO refactor connection setup and destroy
-  public List<ItemPackage> getPackages(UUID playerUuid) throws SQLException, IOException
+  public List<ItemPackage> getPackages(UUID playerUuid, int limit, int quantity) throws SQLException, IOException
   {
     List<ItemPackage> packages = new LinkedList<>();
     Connection connection = null;
@@ -63,9 +97,11 @@ public class ItemPackageDatabase extends Database
       connection = this.manager().getConnection();
       ItemDatabase itemDb = new ItemDatabase(this.manager());
 
-      getStmt = connection.prepareStatement("SELECT item_id, quantity, id FROM item_package_queue WHERE player_uuid = ?");
+      getStmt = connection.prepareStatement("SELECT item_id, quantity, id FROM item_package_queue WHERE player_uuid = ? LIMIT ?, ?");
       PlayerDatabase pDb = new PlayerDatabase(this.manager());
       getStmt.setInt(1, pDb.fetchPlayerId(playerUuid, connection));
+      getStmt.setInt(2, limit);
+      getStmt.setInt(3, quantity);
 
       rs = getStmt.executeQuery();
       while (rs.next())

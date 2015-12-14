@@ -1,12 +1,15 @@
 package xyz.mcex.plugin.util.item;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import xyz.mcex.plugin.DatabaseManager;
+import xyz.mcex.plugin.McexPlugin;
 import xyz.mcex.plugin.SubCommandExecutor;
 import xyz.mcex.plugin.equity.database.EquityDatabase;
+import xyz.mcex.plugin.gui.MenuFlow;
 import xyz.mcex.plugin.message.MessageAlertColor;
 import xyz.mcex.plugin.message.Messages;
 import xyz.mcex.plugin.message.Pages;
@@ -29,7 +32,7 @@ public class ListItemCommand implements SubCommandExecutor
   @Override
   public String getUsage()
   {
-    return "/mcex mailbox <page #>";
+    return "/mcex mailbox";
   }
 
   @Override
@@ -48,45 +51,9 @@ public class ListItemCommand implements SubCommandExecutor
     }
 
     Player p = (Player) commandSender;
-    List<ItemPackage> packages;
-    try
-    {
-      packages = this._ipDb.getPackages(p.getUniqueId());
-    } catch (Exception e)
-    {
-      e.printStackTrace();
-      p.sendMessage(MessageAlertColor.ERROR + Messages.DATABASE_ERROR);
-      return true;
-    }
-
-    int pageNo = 0;
-    if (strings.length >= 3)
-    {
-      try
-      {
-        pageNo = Integer.parseInt(strings[2]) - 1;
-      } catch (NumberFormatException e) {
-        p.sendMessage(MessageAlertColor.ERROR + "Page number must be an integer.");
-        return true;
-      }
-    }
-
-    if (packages.isEmpty())
-    {
-      p.sendMessage(MessageAlertColor.NOTIFY_AGNOSTIC + "Your mailbox is empty.");
-      return true;
-    }
-
-    int i = 1;
-    StringBuilder builder = new StringBuilder();
-    for (ItemPackage pkg : packages)
-    {
-      builder.append(ChatColor.YELLOW).append(i).append(") ");
-      builder.append(ChatColor.WHITE).append(pkg.quantity).append(" x ").append(pkg.item.alias).append("\n");
-      ++i;
-    }
-
-    StringPages.from(builder.toString(), 6).printTo(p, pageNo);
+    MailboxGui gui = new MailboxGui(p, this._ipDb.manager(), 0);
+    Bukkit.getPluginManager().registerEvents(gui, McexPlugin.instance);
+    gui.show();
     return true;
   }
 }

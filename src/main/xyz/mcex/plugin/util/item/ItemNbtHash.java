@@ -7,10 +7,7 @@ import xyz.mcex.plugin.internals.Nullable;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 public class ItemNbtHash
 {
@@ -97,5 +94,17 @@ public class ItemNbtHash
     if (this._digest == null)
       return false;
     return Arrays.equals(otherDigest, this._digest);
+  }
+
+  public static class HashComparator implements Comparator<ItemStack>
+  {
+    @Override
+    public int compare(ItemStack o1, ItemStack o2)
+    {
+      if (ItemNbtHash.from(o1).equals(ItemNbtHash.from(o2)))
+        return 0;
+      else
+        return o1.getAmount() - o2.getAmount();
+    }
   }
 }

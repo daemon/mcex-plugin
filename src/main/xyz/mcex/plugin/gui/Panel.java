@@ -19,6 +19,11 @@ public abstract class Panel
     this._title = title;
   }
 
+  protected Inventory gui()
+  {
+    return this._gui;
+  }
+
   public void hide()
   {
     Bukkit.getPluginManager().callEvent(new GuiVisibilityChangeEvent(this._player, this, false));
