@@ -29,6 +29,47 @@ public class EquityDatabase extends Database
     return buffer.getLong();
   }
 
+  public int pruneOrder(Order order, boolean isBuy) throws SQLException
+  {
+    Connection conn = null;
+    PreparedStatement deleteOrderStmt = null;
+    PreparedStatement getOrderStmt = null;
+    ResultSet rs = null;
+
+    try
+    {
+      conn = this.manager().getConnection();
+      conn.setAutoCommit(false);
+
+      getOrderStmt = this._createGetOrderByIdStmt(conn, isBuy);
+      getOrderStmt.setInt(1, order.rowId);
+      rs = getOrderStmt.executeQuery();
+      if (!rs.next())
+        return 0;
+
+      int remainder = rs.getInt(1);
+      deleteOrderStmt = this._createDeleteOrdersStmt(conn, isBuy);
+      deleteOrderStmt.setInt(1, order.rowId);
+      deleteOrderStmt.execute();
+
+      conn.commit();
+      return remainder;
+    } catch (SQLException e) {
+      if (conn != null)
+        conn.rollback();
+      throw e;
+    } finally {
+      if (rs != null)
+        rs.close();
+      if (getOrderStmt != null)
+        getOrderStmt.close();
+      if (deleteOrderStmt != null)
+        deleteOrderStmt.close();
+      if (conn != null)
+        conn.close();
+    }
+  }
+
   public int countOrders(UUID playerUuid) throws SQLException
   {
     Connection conn = null;
@@ -74,11 +115,13 @@ public class EquityDatabase extends Database
   {
     Connection conn = null;
     PreparedStatement deleteOrderStmt = null;
+    PreparedStatement getOrderStmt = null;
 
     try
     {
       conn = this.manager().getConnection();
       conn.setAutoCommit(false);
+
       deleteOrderStmt = this._createDeleteOrdersStmt(conn, isBuy);
       deleteOrderStmt.setInt(1, orderId);
       deleteOrderStmt.execute();
@@ -351,7 +394,6 @@ public class EquityDatabase extends Database
       return new GetOrderResponse(GetOrderResponse.ResponseCode.FAILURE_SQL);
     } catch (ItemNotFoundException e)
     {
-      e.printStackTrace();
       return new GetOrderResponse(GetOrderResponse.ResponseCode.FAILURE_NOT_FOUND);
     } finally {
       if (rs != null)
@@ -428,6 +470,14 @@ public class EquityDatabase extends Database
       return connection.prepareStatement("SELECT * FROM equity_buy_orders WHERE player_uuid = ? LIMIT ?, ?");
     else
       return connection.prepareStatement("SELECT * FROM equity_sell_orders WHERE player_uuid = ? LIMIT ?, ?");
+  }
+
+  private PreparedStatement _createGetOrderByIdStmt(Connection connection, boolean isBuy) throws SQLException
+  {
+    if (isBuy)
+      return connection.prepareStatement("SELECT quantity FROM equity_buy_orders WHERE id = ? LOCK IN SHARE MODE");
+    else
+      return connection.prepareStatement("SELECT quantity FROM equity_sell_orders WHERE id = ? LOCK IN SHARE MODE");
   }
 
   private PreparedStatement _createInsertOrderStmt(Connection connection, boolean isBuy) throws SQLException

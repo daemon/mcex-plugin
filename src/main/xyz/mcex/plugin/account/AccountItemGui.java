@@ -49,10 +49,12 @@ public class AccountItemGui extends NormalSequentialPanel
     this.setSlotListener(new CancellingSlotListener(), 13);
     inv.setItem(22, Buttons.makeButton(Buttons.DENY, "Cancel order"));
     this.setSlotListener((panel, action, event) -> {
-      boolean success;
+      event.setCancelled(true);
+      int remaindingItems;
+
       try
       {
-        success = this._eqDb.deleteOrder(this.player().getUniqueId(), this._order.rowId, this._isBuy);
+        remaindingItems = this._eqDb.pruneOrder(this._order, this._isBuy);
       } catch (SQLException e)
       {
         Bukkit.getScheduler().runTask(McexPlugin.instance, () -> {
@@ -62,22 +64,26 @@ public class AccountItemGui extends NormalSequentialPanel
         return;
       }
 
-      Bukkit.getScheduler().runTask(McexPlugin.instance, () -> {
-        if (success)
-        {
-          if (this._isBuy)
-            this._economy.depositPlayer(player(), this._order.price * this._order.quantity);
-          else
-          {
-            ItemPackage pkg = new ItemPackage(player().getUniqueId(), this._order.item, this._order.quantity);
-            Bukkit.getScheduler().runTaskAsynchronously(McexPlugin.instance, new DeliverItemPackageAsyncTask(this._pkgDb, pkg));
-            (new NotifyItemPackageTask(player())).run();
-          }
+      if (remaindingItems == 0)
+      {
+        Bukkit.getScheduler().runTask(McexPlugin.instance, () -> {
+          this.player().sendMessage(MessageAlertColor.NOTIFY_AGNOSTIC + "That order doesn't exist anymore.");
+        });
+        this.hide();
+        return;
+      }
 
-          this.player().sendMessage(MessageAlertColor.NOTIFY_SUCCESS + "Order was cancelled successfully!");
-        }
+      Bukkit.getScheduler().runTask(McexPlugin.instance, () -> {
+        if (this._isBuy)
+          this._economy.depositPlayer(player(), this._order.price * remaindingItems);
         else
-          this.player().sendMessage(MessageAlertColor.NOTIFY_AGNOSTIC + "That order doesn't exist.");
+        {
+          ItemPackage pkg = new ItemPackage(player().getUniqueId(), this._order.item, remaindingItems);
+          Bukkit.getScheduler().runTaskAsynchronously(McexPlugin.instance, new DeliverItemPackageAsyncTask(this._pkgDb, pkg));
+          (new NotifyItemPackageTask(player())).run();
+        }
+
+        this.player().sendMessage(MessageAlertColor.NOTIFY_SUCCESS + "Order was cancelled successfully!");
       });
 
       this.hide();
