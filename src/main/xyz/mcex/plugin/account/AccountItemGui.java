@@ -9,10 +9,7 @@ import xyz.mcex.plugin.McexPlugin;
 import xyz.mcex.plugin.equity.database.EquityDatabase;
 import xyz.mcex.plugin.equity.database.Order;
 import xyz.mcex.plugin.equity.database.RegisteredItem;
-import xyz.mcex.plugin.gui.Buttons;
-import xyz.mcex.plugin.gui.MenuFlow;
-import xyz.mcex.plugin.gui.NormalSequentialPanel;
-import xyz.mcex.plugin.gui.Panel;
+import xyz.mcex.plugin.gui.*;
 import xyz.mcex.plugin.message.MessageAlertColor;
 import xyz.mcex.plugin.message.Messages;
 import xyz.mcex.plugin.util.item.DeliverItemPackageAsyncTask;
@@ -49,6 +46,7 @@ public class AccountItemGui extends NormalSequentialPanel
   {
     Inventory inv = super.makeInventory();
     inv.setItem(13, this._item.createInfoItem(this._order.quantity, this._order.price));
+    this.setSlotListener(new CancellingSlotListener(), 13);
     inv.setItem(22, Buttons.makeButton(Buttons.DENY, "Cancel order"));
     this.setSlotListener((panel, action, event) -> {
       boolean success;

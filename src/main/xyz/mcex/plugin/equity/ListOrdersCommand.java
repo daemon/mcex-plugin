@@ -85,7 +85,7 @@ public class ListOrdersCommand implements SubCommandExecutor
       String msg = MessageAlertColor.INFO + finalType + " orders for " + itemName.toLowerCase() + "\n" + pageStr;
 
       if (pageStr == null)
-        msg = MessageAlertColor.ERROR + Messages.DATABASE_ERROR;
+        msg = MessageAlertColor.NOTIFY_AGNOSTIC + "Item not found. Try /mcex search all";
       else if (pageStr.equals(""))
         msg = MessageAlertColor.NOTIFY_AGNOSTIC + "You've reached the end of this database.";
       else
