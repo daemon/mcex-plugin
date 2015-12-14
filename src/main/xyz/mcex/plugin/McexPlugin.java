@@ -66,7 +66,7 @@ public class McexPlugin extends JavaPlugin
     baseCmd.registerCommand("list", new ListOrdersCommand(this, manager));
     baseCmd.registerCommand("admin", new AdminCommand());
     baseCmd.registerCommand("additem", new RegisterItemCommand(manager));
-    baseCmd.registerCommand("account", new AccountCommand(this, manager));
+    baseCmd.registerCommand("account", new AccountCommand(manager, provider.getProvider()));
     baseCmd.registerCommand("cancel", new CancelCommand(this, manager));
     baseCmd.registerCommand("search", new SearchItemCommand(this, manager));
     baseCmd.registerCommand("chart", new ChartCommand(this, manager));

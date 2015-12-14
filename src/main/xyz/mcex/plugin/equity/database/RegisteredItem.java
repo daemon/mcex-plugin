@@ -1,6 +1,7 @@
 package xyz.mcex.plugin.equity.database;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
@@ -8,6 +9,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import xyz.mcex.plugin.internals.Nullable;
 import xyz.mcex.plugin.util.item.ItemNbtHash;
 
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -58,5 +60,21 @@ public class RegisteredItem
     }
 
     return stacks;
+  }
+
+  public ItemStack createInfoItem(int quantity, double price)
+  {
+    ItemStack[] itemStack = this.createItemStacks(1);
+    ItemMeta meta = itemStack[0].getItemMeta();
+    if (meta.getLore() == null)
+      meta.setLore(new LinkedList<>());
+
+    List<String> lores = meta.getLore();
+    lores.add(0, ChatColor.RESET + "" + ChatColor.GOLD + "$" + (Math.round(price * 100) / 100.0) + ChatColor.GRAY + " each");
+    lores.add(0, ChatColor.RESET + "" + ChatColor.GRAY + "Quantity: " + ChatColor.GOLD + quantity);
+    lores.add(0, ChatColor.RESET + "" + ChatColor.GRAY + "MCEX name: " + ChatColor.AQUA + this.alias);
+    meta.setLore(lores);
+    itemStack[0].setItemMeta(meta);
+    return itemStack[0];
   }
 }

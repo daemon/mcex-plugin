@@ -12,6 +12,7 @@ public class Buttons
 {
   public static final ItemStack ACTION;
   public static final ItemStack INACTIVE;
+  public static final ItemStack DENY;
 
   static
   {
@@ -19,6 +20,8 @@ public class Buttons
     ACTION.setDurability((short) 5); // lime green
     INACTIVE = new ItemStack(Material.STAINED_GLASS_PANE, 1);
     INACTIVE.setDurability((short) 7); // dark gray
+    DENY = new ItemStack(Material.STAINED_GLASS_PANE, 1);
+    DENY.setDurability((short) 14); // red
   }
 
   public static ItemStack makeButton(ItemStack template, String title)

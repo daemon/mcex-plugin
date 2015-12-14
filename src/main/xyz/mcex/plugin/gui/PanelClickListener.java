@@ -17,13 +17,10 @@ public class PanelClickListener implements Listener
   @EventHandler(priority = EventPriority.LOWEST)
   public void onClickEvent(InventoryClickEvent event)
   {
-    System.out.println(this._openGuiPlayers.containsKey(event.getWhoClicked()));
-    this._openGuiPlayers.forEach((human, panel) -> System.out.println(human.getName()));
     if (!this._openGuiPlayers.containsKey(event.getWhoClicked()))
       return;
 
-    event.setCancelled(true);
-    this._openGuiPlayers.get(event.getWhoClicked()).onClickEvent(event.getRawSlot());
+    this._openGuiPlayers.get(event.getWhoClicked()).onClickEvent(event);
   }
 
 

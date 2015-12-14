@@ -1,6 +1,7 @@
 package xyz.mcex.plugin.gui;
 
 import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.InventoryClickEvent;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -50,6 +51,6 @@ public abstract class SequentialPanel extends Panel
   @FunctionalInterface
   public interface Listener
   {
-    void onClick(SequentialPanel panel, Action action);
+    void onClick(SequentialPanel panel, Action action, InventoryClickEvent event);
   }
 }

@@ -2,13 +2,14 @@ package xyz.mcex.plugin.gui;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
 import xyz.mcex.plugin.McexPlugin;
 
 public abstract class Panel
 {
   private final Player _player;
-  private final String _title;
+  private String _title;
   private volatile boolean _dirty = true;
   private Inventory _gui;
 
@@ -42,6 +43,11 @@ public abstract class Panel
     return false;
   }
 
+  public void setTitle(String title)
+  {
+    this._title = title;
+  }
+
   public Player player()
   {
     return this._player;
@@ -52,16 +58,29 @@ public abstract class Panel
     return this._title;
   }
 
+  private void showInv()
+  {
+    Bukkit.getScheduler().runTask(McexPlugin.instance, () -> {
+      this._player.openInventory(this._gui);
+      Bukkit.getPluginManager().callEvent(new GuiVisibilityChangeEvent(this._player, this, true));
+      this._dirty = false;
+    });
+  }
+
   public void show()
   {
     if (!this._dirty)
+    {
+      this.showInv();
       return;
+    }
 
     Bukkit.getScheduler().runTaskAsynchronously(McexPlugin.instance, () -> {
       try
       {
         this._gui = this.makeInventory();
       } catch (Exception e) {
+        e.printStackTrace();
         return;
       }
 
@@ -71,14 +90,10 @@ public abstract class Panel
         return;
       }
 
-      Bukkit.getScheduler().runTask(McexPlugin.instance, () -> {
-        this._player.openInventory(this._gui);
-        Bukkit.getPluginManager().callEvent(new GuiVisibilityChangeEvent(this._player, this, true));
-        this._dirty = false;
-      });
+      this.showInv();
     });
   }
 
   public abstract Inventory makeInventory() throws Exception;
-  public abstract void onClickEvent(int rawSlotNo);
+  public abstract void onClickEvent(InventoryClickEvent event);
 }

@@ -7,7 +7,7 @@ import java.util.Stack;
 public class MenuFlow
 {
   private Panel _currentPanel;
-  private Stack<Panel> _panels;
+  private Stack<Panel> _panels = new Stack<>();
 
   public MenuFlow(Panel defaultPanel)
   {

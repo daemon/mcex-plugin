@@ -3,6 +3,7 @@ package xyz.mcex.plugin.util.item;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -10,6 +11,7 @@ import xyz.mcex.plugin.DatabaseManager;
 import xyz.mcex.plugin.McexPlugin;
 import xyz.mcex.plugin.equity.database.ItemDatabase;
 import xyz.mcex.plugin.equity.database.RegisteredItem;
+import xyz.mcex.plugin.gui.CancellingSlotListener;
 import xyz.mcex.plugin.gui.MenuFlow;
 import xyz.mcex.plugin.gui.NormalSequentialPanel;
 import xyz.mcex.plugin.gui.SequentialPanel;
@@ -36,7 +38,7 @@ public class SearchResultGui extends NormalSequentialPanel
   }
 
   @Override
-  public @Nullable Inventory makeInventory() throws SQLException
+  public @Nullable Inventory makeInventory() throws Exception
   {
     Inventory inv = super.makeInventory();
     List<RegisteredItem> items;
@@ -68,6 +70,8 @@ public class SearchResultGui extends NormalSequentialPanel
       meta.setLore(lores);
       itemStack[0].setItemMeta(meta);
       inv.setItem(i, itemStack[0]);
+      this.setSlotListener(new CancellingSlotListener(), i);
+
       ++i;
     }
 
@@ -91,8 +95,9 @@ public class SearchResultGui extends NormalSequentialPanel
     }
 
     @Override
-    public void onClick(SequentialPanel panel, Action action)
+    public void onClick(SequentialPanel panel, Action action, InventoryClickEvent event)
     {
+      event.setCancelled(true);
       if (action == Action.NEXT)
       {
         SearchResultGui newGui = new SearchResultGui(_itemDb.manager(), _query, player(), ++this._pageNum);

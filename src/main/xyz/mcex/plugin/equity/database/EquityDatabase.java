@@ -70,30 +70,16 @@ public class EquityDatabase extends Database
     }
   }
 
-  public boolean deleteOrder(UUID playerUuid, int orderPos, boolean isBuy) throws SQLException
+  public boolean deleteOrder(UUID playerUuid, int orderId, boolean isBuy) throws SQLException
   {
     Connection conn = null;
     PreparedStatement deleteOrderStmt = null;
-    PreparedStatement getOrderPosStmt = null;
-    ResultSet rs = null;
 
     try
     {
       conn = this.manager().getConnection();
       conn.setAutoCommit(false);
       deleteOrderStmt = this._createDeleteOrdersStmt(conn, isBuy);
-      getOrderPosStmt = isBuy ? conn.prepareStatement("SELECT id FROM equity_buy_orders WHERE player_uuid = ? LIMIT ?, 1 FOR UPDATE")
-          : conn.prepareStatement("SELECT id FROM equity_sell_orders WHERE player_uuid = ? LIMIT ?, 1 FOR UPDATE");
-
-      PlayerDatabase pDb = new PlayerDatabase(this.manager());
-      int id = pDb.fetchPlayerId(playerUuid, conn);
-      getOrderPosStmt.setInt(1, id);
-      getOrderPosStmt.setInt(2, orderPos - 1);
-      rs = getOrderPosStmt.executeQuery();
-      if (!rs.next())
-        return false;
-
-      int orderId = rs.getInt(1);
       deleteOrderStmt.setInt(1, orderId);
       deleteOrderStmt.execute();
       conn.commit();
@@ -102,25 +88,15 @@ public class EquityDatabase extends Database
       if (conn != null)
         conn.rollback();
       throw e;
-    } catch (IOException e)
-    {
-      throw new SQLException("Couldn't convert UUID");
     } finally {
-      if (rs != null)
-        rs.close();
       if (deleteOrderStmt != null)
         deleteOrderStmt.close();
-      if (getOrderPosStmt != null)
-        getOrderPosStmt.close();
       if (conn != null)
-      {
-        conn.setAutoCommit(true);
         conn.close();
-      }
     }
   }
 
-  public GetOrderResponse getOrders(UUID playerUuid, int limit, boolean isBuy) throws SQLException
+  public GetOrderResponse getOrders(UUID playerUuid, int limit, int nOrders, boolean isBuy) throws SQLException
   {
     Connection conn = null;
     PreparedStatement getOrderStmt = null;
@@ -134,6 +110,7 @@ public class EquityDatabase extends Database
       getOrderStmt = this._createGetOrdersByPlayer(conn, isBuy);
       getOrderStmt.setInt(1, playerId);
       getOrderStmt.setInt(2, limit);
+      getOrderStmt.setInt(3, nOrders);
       rs = getOrderStmt.executeQuery();
 
       ItemDatabase db = new ItemDatabase(this.manager());
@@ -448,9 +425,9 @@ public class EquityDatabase extends Database
   private PreparedStatement _createGetOrdersByPlayer(Connection connection, boolean isBuy) throws SQLException
   {
     if (isBuy)
-      return connection.prepareStatement("SELECT * FROM equity_buy_orders WHERE player_uuid = ? LIMIT ?, 6");
+      return connection.prepareStatement("SELECT * FROM equity_buy_orders WHERE player_uuid = ? LIMIT ?, ?");
     else
-      return connection.prepareStatement("SELECT * FROM equity_sell_orders WHERE player_uuid = ? LIMIT ?, 6");
+      return connection.prepareStatement("SELECT * FROM equity_sell_orders WHERE player_uuid = ? LIMIT ?, ?");
   }
 
   private PreparedStatement _createInsertOrderStmt(Connection connection, boolean isBuy) throws SQLException

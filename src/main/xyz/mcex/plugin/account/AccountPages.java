@@ -30,7 +30,7 @@ public class AccountPages extends BufferedDatabasePages
     GetOrderResponse response = null;
     try
     {
-      response = this._eqDb.getOrders(this._playerUuid, index * 6, this._isBuy);
+      response = this._eqDb.getOrders(this._playerUuid, index * 6, 6, this._isBuy);
     } catch (SQLException e)
     {
       e.printStackTrace();
