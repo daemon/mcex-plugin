@@ -38,7 +38,7 @@ public class ListItemCommand implements SubCommandExecutor
   @Override
   public String getPermissionName()
   {
-    return "mcex.cmd.itemmail.mailbox";
+    return "mcex.cmd";
   }
 
   @Override

@@ -34,7 +34,7 @@ public class SearchItemCommand implements SubCommandExecutor
   @Override
   public String getPermissionName()
   {
-    return "mcex.cmd.search";
+    return "mcex.cmd";
   }
 
   @Override

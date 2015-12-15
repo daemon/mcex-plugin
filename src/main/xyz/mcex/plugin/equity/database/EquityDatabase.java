@@ -139,6 +139,41 @@ public class EquityDatabase extends Database
     }
   }
 
+  public GetOrderResponse getRecentOrders(int limit, int nOrders, boolean isBuy) throws SQLException
+  {
+    Connection conn = null;
+    PreparedStatement getOrderStmt = null;
+    ResultSet rs = null;
+    try
+    {
+      conn = this.manager().getConnection();
+      getOrderStmt = this._createGetRecentOrdersStmt(conn, isBuy);
+      getOrderStmt.setInt(1, limit);
+      getOrderStmt.setInt(2, nOrders);
+      rs = getOrderStmt.executeQuery();
+
+      ItemDatabase db = new ItemDatabase(this.manager());
+      PlayerDatabase pDb = new PlayerDatabase(this.manager());
+
+      List<Order> orders = new LinkedList<>();
+      while(rs.next())
+      {
+        RegisteredItem item = db.getItem(rs.getInt(3), conn);
+        orders.add(new Order(rs.getInt(1), pDb.getPlayerUuid(rs.getInt(2), conn), rs.getInt(4), rs.getDouble(5), item));
+      }
+
+      return new GetOrderResponse(GetOrderResponse.ResponseCode.OK, orders);
+    } catch (ItemNotFoundException | IOException e)
+    {
+      throw new SQLException("Error: Inconsistent database, turn referential integrity checking on!");
+    } finally {
+      if (getOrderStmt != null)
+        getOrderStmt.close();
+      if (conn != null)
+        conn.close();
+    }
+  }
+
   public GetOrderResponse getOrders(UUID playerUuid, int limit, int nOrders, boolean isBuy) throws SQLException
   {
     Connection conn = null;
@@ -480,6 +515,13 @@ public class EquityDatabase extends Database
       return connection.prepareStatement("SELECT quantity FROM equity_sell_orders WHERE id = ? LOCK IN SHARE MODE");
   }
 
+  private PreparedStatement _createGetRecentOrdersStmt(Connection connection, boolean isBuy) throws SQLException
+  {
+    if (isBuy)
+      return connection.prepareStatement("SELECT * FROM equity_buy_orders ORDER BY ts DESC LIMIT ?, ?");
+    else
+      return connection.prepareStatement("SELECT * FROM equity_sell_orders ORDER BY ts DESC LIMIT ?, ?");
+  }
   private PreparedStatement _createInsertOrderStmt(Connection connection, boolean isBuy) throws SQLException
   {
     if (isBuy)

@@ -2,12 +2,14 @@ package xyz.mcex.plugin.equity;
 
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import xyz.mcex.plugin.McexPlugin;
 import xyz.mcex.plugin.SubCommandExecutor;
 import xyz.mcex.plugin.equity.database.EquityDatabase;
 import xyz.mcex.plugin.equity.database.PutOrderAsyncTask;
@@ -22,9 +24,9 @@ public class BuyCommand implements SubCommandExecutor
   private final JavaPlugin _plugin;
   private final EquityDatabase _eqDb;
 
-  public BuyCommand(Economy economy, JavaPlugin plugin, EquityDatabase db)
+  public BuyCommand(Economy economy, EquityDatabase db)
   {
-    this._plugin = plugin;
+    this._plugin = McexPlugin.instance;
     this._economy = economy;
     this._eqDb = db;
   }
@@ -103,6 +105,20 @@ public class BuyCommand implements SubCommandExecutor
           double offerValue = response.playerUuidToMoney.get(uuid) / quant;
           Bukkit.getPluginManager().callEvent(new PlayerEquityTradeEvent(seller, p, response.item, quant, offerValue));
         });
+
+        String announceMessage = this._plugin.getConfig().getString("announce-listing-msg", ChatColor.GREEN + "[%action] " +
+            ChatColor.GRAY + "§7%player " + ChatColor.GRAY + "just listed " + ChatColor.GOLD + "%quantity %item_name " + ChatColor.GRAY + "at " +
+            ChatColor.AQUA + "$%price " + ChatColor.GRAY + "each.");
+        boolean shouldAnnounce = this._plugin.getConfig().getBoolean("announce-listing", false);
+        if (response.totalQuantity != finalQuantity && shouldAnnounce)
+        {
+          announceMessage = announceMessage.replace("%player", p.getDisplayName())
+              .replace("%action", "BUY")
+              .replace("%quantity", String.valueOf(finalQuantity))
+              .replace("%item_name", itemName.toUpperCase())
+              .replace("%price", String.valueOf(Math.round(rate * 100) / 100.0));
+          Bukkit.getServer().broadcastMessage(announceMessage);
+        }
       }
     });
 
@@ -119,6 +135,6 @@ public class BuyCommand implements SubCommandExecutor
   @Override
   public String getPermissionName()
   {
-    return "mcex.cmd.buy";
+    return "mcex.cmd";
   }
 }

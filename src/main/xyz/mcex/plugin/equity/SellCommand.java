@@ -1,6 +1,7 @@
 package xyz.mcex.plugin.equity;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
@@ -10,6 +11,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.plugin.java.JavaPlugin;
+import xyz.mcex.plugin.McexPlugin;
 import xyz.mcex.plugin.SubCommandExecutor;
 import xyz.mcex.plugin.equity.database.*;
 import xyz.mcex.plugin.equity.event.PlayerEquityTradeEvent;
@@ -27,9 +29,9 @@ public class SellCommand implements SubCommandExecutor
   private final JavaPlugin _plugin;
   private final EquityDatabase _eqDb;
 
-  public SellCommand(JavaPlugin plugin, EquityDatabase db)
+  public SellCommand(EquityDatabase db)
   {
-    this._plugin = plugin;
+    this._plugin = McexPlugin.instance;
     this._eqDb = db;
   }
 
@@ -143,6 +145,7 @@ public class SellCommand implements SubCommandExecutor
     PutOrderAsyncTask task = new PutOrderAsyncTask(this._plugin, this._eqDb, p, orderRequest);
 
     final Integer finalQuantity = quantity;
+    final Double finalOfferVal = offerVal;
     task.addObserver((o, arg) -> {
       PutOrderResponse response = (PutOrderResponse) arg;
       if (response.responseCode != PutOrderResponse.ResponseCode.OK)
@@ -155,6 +158,20 @@ public class SellCommand implements SubCommandExecutor
           double offerValue = response.playerUuidToMoney.get(uuid) / quant;
           Bukkit.getPluginManager().callEvent(new PlayerEquityTradeEvent(p, buyer, response.item, quant, offerValue));
         });
+
+        String announceMessage = this._plugin.getConfig().getString("announce-listing-msg", ChatColor.GREEN + "[%action] " +
+            ChatColor.GRAY + "§7%player " + ChatColor.GRAY + "just listed " + ChatColor.GOLD + "%quantity %item_name " + ChatColor.GRAY + "at " +
+            ChatColor.AQUA + "$%price " + ChatColor.GRAY + "each.");
+        boolean shouldAnnounce = this._plugin.getConfig().getBoolean("announce-listing", true);
+        if (response.totalQuantity != finalQuantity && shouldAnnounce)
+        {
+          announceMessage = announceMessage.replace("%player", p.getDisplayName())
+              .replace("%action", "SELL")
+              .replace("%quantity", String.valueOf(finalQuantity))
+              .replace("%item_name", itemName.toUpperCase())
+              .replace("%price", String.valueOf(Math.round((finalOfferVal / finalQuantity) * 100) / 100.0));
+          Bukkit.getServer().broadcastMessage(announceMessage);
+        }
       }
     });
 
@@ -171,6 +188,6 @@ public class SellCommand implements SubCommandExecutor
   @Override
   public String getPermissionName()
   {
-    return "mcex.cmd.sell";
+    return "mcex.cmd";
   }
 }

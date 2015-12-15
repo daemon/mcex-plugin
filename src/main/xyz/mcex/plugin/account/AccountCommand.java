@@ -34,7 +34,7 @@ public class AccountCommand implements SubCommandExecutor
   @Override
   public String getPermissionName()
   {
-    return "mcex.cmd.account";
+    return "mcex.cmd";
   }
 
   @Override

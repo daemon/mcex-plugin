@@ -35,7 +35,7 @@ public class ChartCommand implements SubCommandExecutor
   @Override
   public String getPermissionName()
   {
-    return "mcex.cmd.chart";
+    return "mcex.cmd";
   }
 
   @Override

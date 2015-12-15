@@ -5,26 +5,28 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
 import xyz.mcex.plugin.DatabaseManager;
+import xyz.mcex.plugin.McexPlugin;
 import xyz.mcex.plugin.SubCommandExecutor;
 import xyz.mcex.plugin.equity.database.OrderListPages;
+import xyz.mcex.plugin.equity.database.RecentOrderListPages;
 import xyz.mcex.plugin.message.MessageAlertColor;
 import xyz.mcex.plugin.message.Messages;
 
-public class ListOrdersCommand implements SubCommandExecutor
+public class ListRecentCommand implements SubCommandExecutor
 {
   private final JavaPlugin _plugin;
   private final DatabaseManager _manager;
 
-  public ListOrdersCommand(JavaPlugin plugin, DatabaseManager manager)
+  public ListRecentCommand(DatabaseManager manager)
   {
-    this._plugin = plugin;
+    this._plugin = McexPlugin.instance;
     this._manager = manager;
   }
 
   @Override
   public String getUsage()
   {
-    return "/mcex list <buy|sell> <item name> [page number]";
+    return "/mcex recent <buy|sell> [page number]";
   }
 
   @Override
@@ -36,7 +38,7 @@ public class ListOrdersCommand implements SubCommandExecutor
   @Override
   public boolean onCommand(CommandSender commandSender, Command command, String s, String[] args)
   {
-    if (args.length < 3)
+    if (args.length < 2)
       return false;
 
     String type = args[1];
@@ -44,12 +46,12 @@ public class ListOrdersCommand implements SubCommandExecutor
     if (type.equalsIgnoreCase("buy"))
     {
       isBuy = true;
-      type = "Buy";
+      type = "buy";
     }
     else if (type.equalsIgnoreCase("sell"))
     {
       isBuy = false;
-      type = "Sell";
+      type = "sell";
     }
     else
     {
@@ -57,13 +59,12 @@ public class ListOrdersCommand implements SubCommandExecutor
       return false;
     }
 
-    String itemName = args[2];
     Integer pageNo = 1;
 
-    if (args.length >= 4)
+    if (args.length >= 3)
       try
       {
-        pageNo = Integer.parseInt(args[3]);
+        pageNo = Integer.parseInt(args[2]);
       } catch (NumberFormatException e) {
         commandSender.sendMessage(MessageAlertColor.ERROR + "Page number must be a positive integer.");
         return false;
@@ -80,16 +81,16 @@ public class ListOrdersCommand implements SubCommandExecutor
     final boolean finalIsBuy = isBuy;
     final String finalType = type;
     Bukkit.getScheduler().runTaskAsynchronously(this._plugin, () -> {
-      OrderListPages pages = new OrderListPages(this._manager, itemName, finalIsBuy);
+      RecentOrderListPages pages = new RecentOrderListPages(this._manager, finalIsBuy);
       String pageStr = pages.getPage(finalPageNo - 1);
-      String msg = MessageAlertColor.INFO + finalType + " orders for " + itemName.toLowerCase() + "\n" + pageStr;
+      String msg = MessageAlertColor.INFO + "Recent open " + finalType + " orders:\n" + pageStr;
 
       if (pageStr == null)
         msg = MessageAlertColor.NOTIFY_AGNOSTIC + "Item not found. Try /mcex search all";
       else if (pageStr.equals(""))
         msg = MessageAlertColor.NOTIFY_AGNOSTIC + "You've reached the end of this database.";
       else
-        msg += "\n" + MessageAlertColor.INFO + "/mcex list " + finalType.toLowerCase() + " " + itemName.toLowerCase() + " " + (finalPageNo + 1) + " for the next page.";
+        msg += "\n" + MessageAlertColor.INFO + "/mcex recent " + finalType + " " + (finalPageNo + 1) + " for the next page.";
 
       final String finalMsg = msg;
       Bukkit.getScheduler().runTask(this._plugin, () -> {

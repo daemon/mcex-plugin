@@ -59,8 +59,8 @@ public class McexPlugin extends JavaPlugin
     EquityDatabase eqDb = new EquityDatabase(manager);
 
     BaseCommand baseCmd = new BaseCommand();
-    baseCmd.registerCommand("buy", new BuyCommand(provider.getProvider(), this, eqDb));
-    baseCmd.registerCommand("sell", new SellCommand(this, eqDb));
+    baseCmd.registerCommand("buy", new BuyCommand(provider.getProvider(), eqDb));
+    baseCmd.registerCommand("sell", new SellCommand(eqDb));
     baseCmd.registerCommand("accept", new AcceptItemCommand(manager));
     baseCmd.registerCommand("mailbox", new ListItemCommand(manager));
     baseCmd.registerCommand("list", new ListOrdersCommand(this, manager));
@@ -69,6 +69,7 @@ public class McexPlugin extends JavaPlugin
     baseCmd.registerCommand("account", new AccountCommand(manager, provider.getProvider()));
     baseCmd.registerCommand("search", new SearchItemCommand(this, manager));
     baseCmd.registerCommand("chart", new ChartCommand(this, manager));
+    baseCmd.registerCommand("recent", new ListRecentCommand(manager));
     this.getCommand("mcex").setExecutor(baseCmd);
 
     Bukkit.getPluginManager().registerEvents(new PanelClickListener(), this);
