@@ -5,6 +5,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitScheduler;
+import xyz.mcex.plugin.McexPlugin;
 import xyz.mcex.plugin.internals.Nullable;
 import xyz.mcex.plugin.message.MessageAlertColor;
 import xyz.mcex.plugin.message.Messages;
@@ -128,6 +129,12 @@ public class PutOrderAsyncTask extends Observable implements Runnable
           if (_isBuy)
           {
             this._dbResponse.exerciseOrders(_economy);
+            /* Bukkit.getScheduler().runTask(McexPlugin.instance, () -> {
+              this._dbResponse.playerUuidToQuantity.forEach((uuid, quantity) -> {
+                if (Bukkit.getOfflinePlayer(uuid).isOnline())
+                  Bukkit.getPlayer(uuid).sendMessage(MessageAlertColor.NOTIFY_SUCCESS + "")
+              });
+            });*/
             if (this._dbResponse.totalQuantity > 0)
             {
               player.sendMessage(MessageAlertColor.NOTIFY_SUCCESS + "Bought " + this._dbResponse.totalQuantity + " items for $"

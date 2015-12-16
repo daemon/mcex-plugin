@@ -13,6 +13,7 @@ import xyz.mcex.plugin.equity.database.EquityDatabase;
 import xyz.mcex.plugin.gui.PanelClickListener;
 import xyz.mcex.plugin.util.item.AcceptItemCommand;
 import xyz.mcex.plugin.util.item.ListItemCommand;
+import xyz.mcex.plugin.util.item.MailboxLoginListener;
 import xyz.mcex.plugin.util.item.SearchItemCommand;
 
 import java.beans.PropertyVetoException;
@@ -73,6 +74,7 @@ public class McexPlugin extends JavaPlugin
     this.getCommand("mcex").setExecutor(baseCmd);
 
     Bukkit.getPluginManager().registerEvents(new PanelClickListener(), this);
+    Bukkit.getPluginManager().registerEvents(new MailboxLoginListener(manager), this);
 
     Vertx.vertx().deployVerticle(new ChartVerticle(getConfig(), manager));
   }

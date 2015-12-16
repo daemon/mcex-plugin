@@ -21,4 +21,5 @@ listing-limit-msg: You've reached the maximum number of %d buy and sell orders.
 
 # Announce buy and sell listings in public chat
 announce-listing: true
-announce-listing-msg: §a[%action] §7%player §7just listed §6%quantity %item_name §7at §b$%price §7each.
+announce-listing-msg-buy: §a[%action] §7%player §7wants §6%quantity %item_name §7at §b$%price §7each.
+announce-listing-msg-sell: §a[%action] §7%player §7is selling §6%quantity %item_name §7at §b$%price §7each.

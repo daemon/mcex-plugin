@@ -106,15 +106,15 @@ public class BuyCommand implements SubCommandExecutor
           Bukkit.getPluginManager().callEvent(new PlayerEquityTradeEvent(seller, p, response.item, quant, offerValue));
         });
 
-        String announceMessage = this._plugin.getConfig().getString("announce-listing-msg", ChatColor.GREEN + "[%action] " +
-            ChatColor.GRAY + "§7%player " + ChatColor.GRAY + "just listed " + ChatColor.GOLD + "%quantity %item_name " + ChatColor.GRAY + "at " +
+        String announceMessage = this._plugin.getConfig().getString("announce-listing-msg-buy", ChatColor.GREEN + "[%action] " +
+            ChatColor.GRAY + "§7%player " + ChatColor.GRAY + "wants " + ChatColor.GOLD + "%quantity %item_name " + ChatColor.GRAY + "at " +
             ChatColor.AQUA + "$%price " + ChatColor.GRAY + "each.");
         boolean shouldAnnounce = this._plugin.getConfig().getBoolean("announce-listing", false);
-        if (response.totalQuantity != finalQuantity && shouldAnnounce)
+        if (response.totalQuantity != finalQuantity && shouldAnnounce && finalQuantity - response.totalQuantity > 0)
         {
           announceMessage = announceMessage.replace("%player", p.getDisplayName())
               .replace("%action", "BUY")
-              .replace("%quantity", String.valueOf(finalQuantity))
+              .replace("%quantity", String.valueOf(finalQuantity - response.totalQuantity))
               .replace("%item_name", itemName.toUpperCase())
               .replace("%price", String.valueOf(Math.round(rate * 100) / 100.0));
           Bukkit.getServer().broadcastMessage(announceMessage);

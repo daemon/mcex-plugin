@@ -88,7 +88,7 @@ public class ListRecentCommand implements SubCommandExecutor
       if (pageStr == null)
         msg = MessageAlertColor.NOTIFY_AGNOSTIC + "Item not found. Try /mcex search all";
       else if (pageStr.equals(""))
-        msg = MessageAlertColor.NOTIFY_AGNOSTIC + "You've reached the end of this database.";
+        msg = MessageAlertColor.NOTIFY_AGNOSTIC + Messages.NO_RESULTS;
       else
         msg += "\n" + MessageAlertColor.INFO + "/mcex recent " + finalType + " " + (finalPageNo + 1) + " for the next page.";
 

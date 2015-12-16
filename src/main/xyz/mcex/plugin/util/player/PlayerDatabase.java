@@ -21,34 +21,59 @@ public class PlayerDatabase extends Database
 
   public int fetchPlayerId(UUID playerUuid, Connection connection) throws SQLException, IOException
   {
-    PreparedStatement getPlayerIdStmt = this._createGetPlayerId(connection);
-    getPlayerIdStmt.setBinaryStream(1, PlayerUtils.uuidToStream(playerUuid), 16);
-    ResultSet playerRs = getPlayerIdStmt.executeQuery();
+    ResultSet playerRs = null;
+    PreparedStatement insertPlayerStmt = null;
+    PreparedStatement getPlayerIdStmt = null;
 
-    if (!playerRs.next())
+    try
     {
-      PreparedStatement insertPlayerStmt = this._createInsertPlayerId(connection);
-      insertPlayerStmt.setBinaryStream(1, PlayerUtils.uuidToStream(playerUuid), 16);
-      insertPlayerStmt.execute();
+      getPlayerIdStmt = this._createGetPlayerId(connection);
+      getPlayerIdStmt.setBinaryStream(1, PlayerUtils.uuidToStream(playerUuid), 16);
+      playerRs = getPlayerIdStmt.executeQuery();
+
+      if (!playerRs.next())
+      {
+        insertPlayerStmt = this._createInsertPlayerId(connection);
+        insertPlayerStmt.setBinaryStream(1, PlayerUtils.uuidToStream(playerUuid), 16);
+        insertPlayerStmt.execute();
+        insertPlayerStmt.close();
+      }
+
+      playerRs.close();
+      getPlayerIdStmt.setBinaryStream(1, PlayerUtils.uuidToStream(playerUuid), 16);
+      playerRs = getPlayerIdStmt.executeQuery();
+      if (!playerRs.next())
+        throw new SQLException("Failed to insert new player");
+
+      return playerRs.getInt(1);
+    } finally {
+      if (getPlayerIdStmt != null)
+        getPlayerIdStmt.close();
+      if (insertPlayerStmt != null)
+        insertPlayerStmt.close();
+      if (playerRs != null)
+        playerRs.close();
     }
-
-    playerRs.close();
-    getPlayerIdStmt.setBinaryStream(1, PlayerUtils.uuidToStream(playerUuid), 16);
-    playerRs = getPlayerIdStmt.executeQuery();
-    if (!playerRs.next())
-      throw new SQLException("Failed to insert new player");
-
-    return playerRs.getInt(1);
   }
 
   public UUID getPlayerUuid(int playerId, Connection connection) throws SQLException, IOException
   {
-    PreparedStatement stmt = this._createGetPlayerUuid(connection);
-    stmt.setInt(1, playerId);
-    ResultSet rs = stmt.executeQuery();
-    if (!rs.next())
-      throw new SQLException("Couldn't get player");
-    return PlayerUtils.streamToUuid(rs.getBinaryStream(1));
+    PreparedStatement stmt = null;
+    ResultSet rs = null;
+    try
+    {
+      stmt = this._createGetPlayerUuid(connection);
+      stmt.setInt(1, playerId);
+      rs = stmt.executeQuery();
+      if (!rs.next())
+        throw new SQLException("Couldn't get player");
+      return PlayerUtils.streamToUuid(rs.getBinaryStream(1));
+    } finally {
+      if (rs != null)
+        rs.close();
+      if (stmt != null)
+        stmt.close();
+    }
   }
 
   private PreparedStatement _createGetPlayerUuid(Connection connection) throws SQLException

@@ -89,7 +89,7 @@ public class AccountGui extends NormalSequentialPanel
         Bukkit.getScheduler().runTask(McexPlugin.instance, () -> player().sendMessage(MessageAlertColor.NOTIFY_AGNOSTIC + "You have no outstanding orders."));
         return null;
       }
-      Bukkit.getScheduler().runTask(McexPlugin.instance, () -> player().sendMessage(MessageAlertColor.NOTIFY_AGNOSTIC + "You've reached the end of this database."));
+      Bukkit.getScheduler().runTask(McexPlugin.instance, () -> player().sendMessage(MessageAlertColor.NOTIFY_AGNOSTIC + Messages.NO_RESULTS));
       return null;
     } else if (response.orders.size() < 18)
       inv.setItem(26, Buttons.makeButton(Buttons.INACTIVE, "No next page!"));

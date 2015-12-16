@@ -53,7 +53,7 @@ public class SearchResultGui extends NormalSequentialPanel
 
     if (items.size() == 0)
     {
-      Bukkit.getScheduler().runTask(McexPlugin.instance, () -> player().sendMessage(MessageAlertColor.NOTIFY_AGNOSTIC + "You've reached the end of of this database."));
+      Bukkit.getScheduler().runTask(McexPlugin.instance, () -> player().sendMessage(MessageAlertColor.NOTIFY_AGNOSTIC + Messages.NO_RESULTS));
       return null;
     }
 
